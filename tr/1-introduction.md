@@ -12,7 +12,7 @@ Bunu birkaç farklı öğretici ve makale okuyarak öğrendim çünkü her biri 
 Çeşitli kaynaklardan geçerek parçaları bir araya getirebildim ve hepsi yerine oturdu. Bu, Haskell'i öğrenmek için başka bir yararlı kaynak ekleme girişimidir,
 böylece sevdiğiniz birini bulma şansınız artar.
 
-![bird](img/bird.png)
+![bird](../img/bird.png)
 
 Bu eğitim, zorunlu(imperative) programlama dillerinde (C, C ++, Java, Python…) deneyimi olan ancak daha önce fonksiyonel bir dilde programlanmamış (Haskell, ML, OCaml…) kişilere yöneliktir.
 Her ne kadar önemli bir programlama deneyiminiz olmasa bile, sizin gibi zeki bir kişinin Haskell'i takip edip öğrenebileceğine bahse girerim.
@@ -27,7 +27,7 @@ Sizi farklı düşünmeye zorluyor, bu da bizi bir sonraki bölüme getiriyor ..
 Peki Haskell nedir?
 -------------------
 
-![fx](img/fx.png)
+![fx](../img/fx.png)
 Haskell, **saf olan fonksiyonel bir programlama dilidir**. Zorunlu dillerde, bilgisayara bir dizi görev vererek işleri halledersiniz ve sonra bunları çalıştırır.
 Bunları yürütürken durumu değiştirebilir. Örneğin, değişken `a`'yı 5'e ayarlarsınız ve sonra bazı şeyler yapar ve sonra başka bir şeye ayarlarsınız.
 Birkaç kez bazı eylemler yapmak için kontrol akış yapılarına sahipsiniz. saf fonksiyonel programlamada(purely functional programming),
@@ -40,7 +40,7 @@ Eğer bir fonksiyon aynı parametrelerle iki kez çağrılırsa, aynı sonucu d�
 yalnızca derleyicinin programın davranışı hakkında akıl yürütmesine izin vermekle kalmaz, aynı zamanda bir fonksiyonun doğru olduğunu kolayca çıkarmanıza
 (ve hatta kanıtlamanıza) ve ardından basit fonksiyonları birbirine yapıştırarak daha karmaşık fonksiyonlar oluşturmanıza olanak tanır.
 
-![lazy](img/lazy.png)Haskell **tembeldir(lazy)**. Bu, özellikle aksi belirtilmedikçe, Haskell'in size gerçekten bir sonuç göstermeye zorlanana kadar fonksiyonları yürütmeyeceği ve
+![lazy](../img/lazy.png)Haskell **tembeldir(lazy)**. Bu, özellikle aksi belirtilmedikçe, Haskell'in size gerçekten bir sonuç göstermeye zorlanana kadar fonksiyonları yürütmeyeceği ve
 bir şeyleri hesaplamayacağı anlamına gelir. Bu, referans şeffaflığı ile uyumludur ve programları,
 **veriler üzerindeki bir dizi dönüşüm** olarak düşünmenize olanak tanır. Ayrıca sonsuz veri yapıları gibi harika şeylere izin verir.
 Diyelim ki, `xs = [1,2,3,4,5,6,7,8]` sayılarının değişmez bir listesi ve her elemanı 2 ile çarpan ve ardından yeni bir liste döndüren bir `doubleMe` fonksiyonu var.
@@ -52,7 +52,7 @@ program size "Evet, evet, daha sonra yaparım!" diyecektir. Ama sonucu görmek i
 Bu şekilde, tembel bir dilden bir şey istediğinizde, sadece bazı başlangıç verilerini alabilir ve
 sonunda istediğiniz şeye benzemesi için onu verimli bir şekilde dönüştürün ve onarın.
 
-![boat](img/boat.png)Haskell **statik türlüdür(statically typed)**. Programınızı derlediğinizde, derleyici hangi kod parçasının bir sayı olduğunu,
+![boat](../img/boat.png)Haskell **statik türlüdür(statically typed)**. Programınızı derlediğinizde, derleyici hangi kod parçasının bir sayı olduğunu,
 hangi kodun bir string olduğunu vb. şeyleri bilir. Bu, derleme sırasında birçok olası hatanın yakalandığı anlamına gelir. Bir sayı ve string'i bir araya getirmeye çalışırsanız,
 derleyici size sızlanacaktır. Haskell, **tür çıkarımına(type inference)** sahip çok iyi bir tür sistemi kullanır.
 Bu, her kod parçasını bir türle açık bir şekilde etiketlemeniz gerekmediği anlamına gelir, çünkü tür sistemi bu konuda akıllıca çok şey çözebilir.

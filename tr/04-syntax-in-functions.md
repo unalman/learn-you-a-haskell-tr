@@ -413,7 +413,7 @@ cylinder r h =
         topArea = pi * r ^2  
     in  sideArea + 2 * topArea  
 ~~~~
-
+![letitbe](../img/letitbe.png)
 Biçimi, `let <bindings> in <expression>`'dır. *let* bölümünde tanımladığınız isimlere *in* kısmından sonraki ifadeye erişilebilir.
 Gördüğünüz gibi, bunu bir where bağlamı ile de tanımlayabilirdik. Not: İsimlerin de tek bir sütunda hizalandığına dikkat edin. Öyleyse ikisi arasındaki fark nedir?
 Şimdilik öyle görünüyor ki *let* önce bağlamaları ve daha sonra bunları kullanan ifadeyi koyarken *where* tam tersi.

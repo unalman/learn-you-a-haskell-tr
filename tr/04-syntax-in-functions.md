@@ -496,6 +496,7 @@ kapsamları açısından oldukça yerel olduklarından, korumalar arasında kull
 
 Durum ifadeleri
 ---------------
+![case](../img/case.png)
 
 Çoğu zorunlu dilin (C, C ++, Java, vb.) Büyük/küçük harf sözdizimi vardır ve bunlarda programladıysanız, muhtemelen ne hakkında olduğunu biliyorsunuzdur.
 Bu, bir değişkeni almak ve sonra o değişkenin belirli değerleri için kod bloklarını çalıştırmak ve sonra değişkenin bir durum oluşturmadığımız bir değere sahip 

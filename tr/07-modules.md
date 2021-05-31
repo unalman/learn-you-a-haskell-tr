@@ -609,6 +609,7 @@ Data.Char
 
 `Data.Char` modülü adından da anlaşılacağı gibi yapar. Karakterlerle ilgilenen fonksiyonları dışa aktarır.
 String'ler üzerinde filtreleme ve eşleme yaparken de faydalıdır çünkü bunlar sadece karakter listeleridir.
+![legochar](../img/legochar.png)
 
 `Data.Char`, karakterler üzerinden bir grup predicate'i dışa aktarır. Yani, bir karakteri alan ve bize bu varsayımın doğru mu yanlış mı olduğunu söyleyen fonksiyonlar.
 
@@ -1055,6 +1056,7 @@ Data.Set
 `Data.Set` modülü bize kümeler sunar. Matematikteki kümeler gibi. Kümeler, listeler ve haritalar arasında bir çeşit geçiş gibidir. Bir kümedeki tüm öğeler benzersizdir.
 Ve dahili olarak ağaçlarla uygulandıkları için (`Data.Map`'teki map'ler gibi), sıralanırlar. Üyeliği kontrol etmek, eklemek,
 silmek vb. Listelerle aynı şeyi yapmaktan çok daha hızlıdır. Kümelerle uğraşırken en yaygın işlem bir kümeye ekleme, üyeliği kontrol etme ve bir kümeyi listeye dönüştürmedir.
+![legosets](../img/legosets.png)
 
 `Data.Set`'teki isimler bir çok `Prelude` ve `Data.List` isimleriyle çakıştığından, qualified import yapıyoruz.
 
@@ -1170,6 +1172,8 @@ Kendi modüllerinizi yapmak
 kodunuzu birkaç dosyaya bölmenize olanak tanır ve Haskell de farklı değildir. Programlar oluştururken, benzer bir amaca yönelik fonksiyon 
 ve türleri alıp bunları bir modüle yerleştirmek iyi bir uygulamadır. Bu şekilde, modülünüzü içe aktararak bu fonksiyonları diğer programlarda
 kolayca yeniden kullanabilirsiniz.
+![making_modules](../img/making_modules.png)
+
 
 Birkaç geometrik nesnenin hacmini ve alanını hesaplamak için bazı fonksiyonlar sağlayan küçük bir modül yaparak kendi modüllerimizi nasıl oluşturabileceğimize bir bakalım.
 `Geometry.hs` adında bir dosya oluşturarak başlayacağız.

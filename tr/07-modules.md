@@ -575,80 +575,753 @@ on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 f `on` g = \x y -> f (g x) (g y)  
 ~~~~
 
+Yani ``(==) `on` (> 0)`` yapıldığında `\x y -> (x > 0) == (y > 0)` gibi görünen bir eşitlik fonksiyona döndürülür. 
+`on`, *By* fonksiyonlarıyla çokça kullanılır çünkü bununla şunları yapabiliriz:
 
 ~~~~ {.haskell: .ghci name="code"}
-on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
-f `on` g = \x y -> f (g x) (g y)  
+ghci> groupBy ((==) `on` (> 0)) values  
+[[-4.3,-2.4,-1.2],[0.4,2.3,5.9,10.5,29.1,5.3],[-2.4,-14.5],[2.9,2.3]]  
+~~~~
+
+Benzer şekilde, `sort`, `insert`, `maximum` ve `minimum` da daha genel eşdeğerlerine sahiptir. 
+`groupBy` gibi fonksiyonlar, iki öğenin ne zaman eşit olduğunu belirleyen bir fonksiyon alır. 
+`sortBy`, `insertBy`, `maximumBy` ve `minimumBy`, bir öğenin diğerinden büyük, küçük veya eşit olup olmadığını belirleyen bir fonksiyonu alır.
+`sortBy`'ın tür imzası `sortBy :: (a -> a -> Ordering) -> [a] -> [a]` şeklindedir. Daha önce hatırlıyorsanız, `Ordering` türü `LT`, `EQ` veya `GT` değerine sahip olabilir.
+`sort`, `sortBy compare`'in eşdeğeridir, çünkü karşılaştırma yalnızca türü `Ord` tür sınıfında olan iki öğeyi alır ve sıralama ilişkilerini döndürür.
+
+Listeler karşılaştırılabilir, ancak olduklarında sözlükbilimsel(lexicographically) olarak karşılaştırılırlar.
+Ya bir liste listemiz varsa ve bunu iç listelerin içeriğine göre değil, uzunluklarına göre sıralamak istiyorsak? 
+Muhtemelen tahmin ettiğiniz gibi `sortBy` fonksiyonunu kullanacağız.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> let xs = [[5,4,5,4,4],[1,2,3],[3,5,4,3],[],[2],[2,2]]  
+ghci> sortBy (compare `on` length) xs  
+[[],[2],[2,2],[1,2,3],[3,5,4,3],[5,4,5,4,4]]  
+~~~~
+
+``compare `on` length`` dostum, bu neredeyse gerçek İngilizceye benziyor. Burada tam olarak nasıl çalıştığından emin değilseniz, ``compare `on` length``, 
+``\x y -> length x `compare` length y``'nin eşdeğeridir. Eşitlik fonksiyonu alan *By* fonksiyonlarıyla uğraşırken,
+genellikle ``(==) `on` something`` yaparsınız ve bir sıralama fonksiyonu alan *By* fonksiyonlarıyla uğraşırken, genellikle ``compare `on` something`` yaparsınız.
+
+
+Data.Char
+---------
+
+`Data.Char` modülü adından da anlaşılacağı gibi yapar. Karakterlerle ilgilenen fonksiyonları dışa aktarır.
+String'ler üzerinde filtreleme ve eşleme yaparken de faydalıdır çünkü bunlar sadece karakter listeleridir.
+
+`Data.Char`, karakterler üzerinden bir grup predicate'i dışa aktarır. Yani, bir karakteri alan ve bize bu varsayımın doğru mu yanlış mı olduğunu söyleyen fonksiyonlar.
+
+İşte bunlar:
+
+`isControl`, bir karakterin bir kontrol karakteri olup olmadığını kontrol eder. 
+
+`isSpace`, bir karakterin white-space karakteri olup olmadığını kontrol eder. Buna boşluklar, sekme karakterleri, yeni satırlar vb. içerir.
+
+`isLower`, bir karakterin küçük harfli olup olmadığını kontrol eder.
+
+`isUpper`, bir karakterin büyük harfli olup olmadığını kontrol eder.
+
+`isAlpha`, bir karakterin harf olup olmadığını kontrol eder.
+
+`isAlphaNum`, bir karakterin harf mi yoksa sayı mı olduğunu kontrol eder.
+
+`isPrint`, bir karakterin yazdırılabilir olup olmadığını kontrol eder. Örneğin, kontrol karakterleri yazdırılamaz.
+
+`isDigit`, bir karakterin rakam olup olmadığını kontrol eder.
+
+`isOctDigit`, bir karakterin sekizlik(Octal) rakam olup olmadığını kontrol eder.
+
+`isHexDigit`, bir karakterin onaltılık(hex) bir rakam olup olmadığını kontrol eder.
+
+`isLetter` bir karakterin harf olup olmadığını kontrol eder.
+
+`isMark`, Unicode işaret karakterlerini kontrol eder. Bunlar, aksanlı sonlar oluşturmak için önceki harflerle birleşen karakterlerdir. Fransızsanız bunu kullanın.
+
+`isNumber`, bir karakterin sayısal olup olmadığını kontrol eder.
+
+`isPunctuation`, bir karakterin noktalama işareti olup olmadığını kontrol eder.
+
+`isSymbol`, bir karakterin süslü bir matematik veya para birimi simgesi olup olmadığını kontrol eder.
+
+`isSeparator`, Unicode boşluklarını ve ayırıcıları denetler.
+
+`isAscii`, bir karakterin Unicode karakter kümesinin ilk 128 karakterine girip girmediğini kontrol eder.
+
+`isLatin1`, bir karakterin Unicode'un ilk 256 karakterine girip girmediğini kontrol eder.
+
+`isAsciiUpper`, bir karakterin ASCII ve büyük harf olup olmadığını kontrol eder.
+
+`isAsciiLower`, bir karakterin ASCII ve küçük harf olup olmadığını kontrol eder.
+
+Tüm bu predicate'ler bir `Char -> Bool` tür imzasına sahiptir. Çoğu zaman bunu string'leri veya bunun gibi bir şeyi filtrelemek için kullanacaksınız.
+Örneğin, bir kullanıcı adı alan bir program yaptığımızı varsayalım ve kullanıcı adı sadece alfasayısal karakterlerden oluşabilir.
+Kullanıcı adının doğru olup olmadığını belirlemek için `Data.List` fonksiyonunu `all` ile `Data.Char` predicate'lerini birlikte kullanabiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> all isAlphaNum "bobby283"  
+True  
+ghci> all isAlphaNum "eddy the fish!"  
+False  
+~~~~
+
+Kewl. Hatırlamazsanız, `all` bir predicate ve bir liste alır ve yalnızca bu predicate listedeki her öğe için tutuyorsa `True` döndürür.
+
+`Data.List`'in `words` fonksiyonunu simüle etmek için `isSpace`'i de kullanabiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> words "hey guys its me"  
+["hey","guys","its","me"]  
+ghci> groupBy ((==) `on` isSpace) "hey guys its me"  
+["hey"," ","guys"," ","its"," ","me"]  
+ghci>    
+~~~~
+
+Hmmm, `words`'ün yaptığını yapıyor gibi ama sadece boşluk unsurlarıyla baş başa kalıyoruz. Hmm, ne yapalım? Biliyorum, şu salağı süzelim.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> filter (not . any isSpace) . groupBy ((==) `on` isSpace) $ "hey guys its me"  
+["hey","guys","its","me"]     
+~~~~
+
+Ah.
+
+`Data.Char` ayrıca `Ordering` gibi bir veri türünü dışa aktarır. `Ordering` türü `LT`, `EQ` veya `GT` değerine sahip olabilir. Bu bir çeşit sıralama.
+İki öğenin karşılaştırılmasından doğabilecek birkaç olası sonucu açıklar. `GeneralCategory` türü ayrıca bir numaralandırmadır(enumaration).
+Bize bir karakterin içine girebileceği birkaç olası kategori sunar. Bir tür `generalCategory :: Char -> GeneralCategory` vardır.
+Yaklaşık 31 kategori var, bu yüzden hepsini burada listelemeyeceğiz, ancak fonksiyonla oynayalım.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> generalCategory ' '  
+Space  
+ghci> generalCategory 'A'  
+UppercaseLetter  
+ghci> generalCategory 'a'  
+LowercaseLetter  
+ghci> generalCategory '.'  
+OtherPunctuation  
+ghci> generalCategory '9'  
+DecimalNumber  
+ghci> map generalCategory " \t\nA9?|"  
+[Space,Control,Control,UppercaseLetter,DecimalNumber,OtherPunctuation,MathSymbol] 
+~~~~
+
+`GeneralCategory` türü `Eq` tür sınıfıının bir parçası olduğundan, `generalCategory c == Space` gibi şeyleri de test edebiliriz.
+
+`toUpper`, bir karakteri büyük harfe dönüştürür. Boşluklar, sayılar ve benzerleri değişmeden kalır.
+
+`toLower`, bir karakteri küçük harfe dönüştürür.
+
+`toTitle`, bir karakteri büyük / küçük harfe dönüştürür. Çoğu karakter için, başlık-büyük / küçük harf aynıdır.
+
+`digitToInt`, bir karakteri `Int`'e dönüştürür. Başarılı olmak için karakterin `'0'..'9'`, `'a'..'f'` veya `'A'..'F'` aralığında olması gerekir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> map digitToInt "34538"  
+[3,4,5,3,8]  
+ghci> map digitToInt "FF85AB"  
+[15,15,8,5,10,11]  
+~~~~
+
+`intToDigit`, `digitToInt`'in ters fonsiyonudur. `0..15` aralığında bir `Int` alır ve onu küçük harf karakterine dönüştürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> intToDigit 15  
+'f'  
+ghci> intToDigit 5  
+'5'  
+~~~~
+
+`Ord` ve `chr` fonksiyonları, karakterleri karşılık gelen sayılara dönüştürür ve bunun tersi de geçerlidir:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> ord 'a'  
+97  
+ghci> chr 97  
+'a'  
+ghci> map ord "abcdefgh"  
+[97,98,99,100,101,102,103,104]  
+~~~~
+
+İki karakterin `ord` değerleri arasındaki fark, Unicode tablosunda ne kadar uzakta olduklarına eşittir.
+
+Sezar şifresi(Caesar cipher), mesajların her bir karakteri alfabede sabit sayıda konumla kaydırarak kodlamanın ilkel bir yöntemidir.
+Kendimize ait bir tür Sezar şifresini kolayca yaratabiliriz, ancak kendimizi alfabeye sınırlamayız.
+
+~~~~ {.haskell: .ghci name="code"}
+encode :: Int -> String -> String  
+encode shift msg = 
+    let ords = map ord msg  
+        shifted = map (+ shift) ords  
+    in  map chr shifted   
+~~~~
+
+Burada önce string'i sayılar listesine dönüştürüyoruz. Ardından sayılar listesini tekrar karakterlere dönüştürmeden önce her sayıya kaydırma miktarını ekliyoruz.
+Bir kompozisyon kovboyuysanız, bu fonksiyonun gövdesini `map (chr . (+ shift) . ord) msg` olarak yazabilirsiniz. Birkaç mesajı kodlamayı deneyelim.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> encode 3 "Heeeeey"  
+"Khhhhh|"  
+ghci> encode 4 "Heeeeey"  
+"Liiiii}"  
+ghci> encode 1 "abcd"  
+"bcde"  
+ghci> encode 5 "Marry Christmas! Ho ho ho!"  
+"Rfww~%Hmwnxyrfx&%Mt%mt%mt&"  
+~~~~
+
+Pekala kodlanmış. Bir mesajın kodunu çözmek, temelde onu ilk başta kaydırıldığı yer sayısına göre geri kaydırmaktır.
+
+~~~~ {.haskell: .ghci name="code"}
+decode :: Int -> String -> String  
+decode shift msg = encode (negate shift) msg  
+~~~~
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> encode 3 "Im a little teapot"  
+"Lp#d#olwwoh#whdsrw"  
+ghci> decode 3 "Lp#d#olwwoh#whdsrw"  
+"Im a little teapot"  
+ghci> decode 5 . encode 5 $ "This is a sentence"  
+"This is a sentence"  
 ~~~~
 
 
+Data.Map
+--------
+
+İlişkilendirme listeleri (sözlükler de denir), sıralamanın önemli olmadığı durumlarda key-value çiftlerini depolamak için kullanılan listelerdir.
+Örneğin, telefon numaralarını saklamak için bir ilişkilendirme listesi kullanabiliriz; burada telefon numaraları değerler, kişilerin adları ise anahtarlar olabilir.
+Hangi sırayla saklandıkları umurumuzda değil, sadece doğru kişi için doğru telefon numarasını almak istiyoruz.
+
+Haskell'de dernek listelerini temsil etmenin en açık yolu, bir çiftler listesine sahip olmaktır. Çiftteki ilk bileşen anahtar, ikinci bileşen değer olacaktır.
+Aşağıda, telefon numaraları içeren bir ilişkilendirme listesi örneği verilmiştir:
+
+~~~~ {.haskell: .ghci name="code"}
+phoneBook =   
+    [("betty","555-2938")  
+    ,("bonnie","452-2928")  
+    ,("patsy","493-2928")  
+    ,("lucille","205-2928")  
+    ,("wendy","939-8282")  
+    ,("penny","853-2492")  
+    ]  
+~~~~
+
+Görünüşte garip olan bu girintiye rağmen, bu sadece dizelerin bir listesidir. İlişkilendirme listeleri ile uğraşırken en yaygın görev,
+anahtara göre bir değer aramaktır. Anahtar verilen bir değeri arayan bir fonksiyon yapalım.
+
+~~~~ {.haskell: .ghci name="code"}
+findKey :: (Eq k) => k -> [(k,v)] -> v  
+findKey key xs = snd . head . filter (\(k,v) -> key == k) $ xs  
+~~~~
+
+Bir anahtar ve bir liste alan fonksiyon, listeyi filtreler, böylece yalnızca eşleşen anahtarlar kalır, eşleşen ilk key-value çiftini alır ve değeri döndürür.
+Peki aradığımız anahtar ilişkilendirme listesinde yoksa ne olur? Burada, ilişkilendirme listesinde bir anahtar yoksa, 
+bir çalışma zamanı hatası veren boş bir listenin başını almaya çalışırız. Bununla birlikte, programlarımızı bu kadar kolay çökertmekten kaçınmalıyız, 
+bu yüzden `Maybe` veri türünü kullanalım. Anahtarı bulamazsak `Nothing` döndürürüz. Onu bulursak, `Just something` döndürürüz, burada bir şey o anahtara karşılık gelen değerdir.
+
+~~~~ {.haskell: .ghci name="code"}
+findKey :: (Eq k) => k -> [(k,v)] -> Maybe v  
+findKey key [] = Nothing  
+findKey key ((k,v):xs) = if key == k  
+                            then Just v  
+                            else findKey key xs  
+~~~~
+
+Tür bildirimine bakın. Eşitlenebilen bir anahtar, bir ilişkilendirme listesi alır ve sonra belki bir değer üretir. Doğru gibi görünüyor.
+
+Bu, bir liste üzerinde çalışan bir ders kitabı özyinelemeli fonksiyondur. Uç durum, bir listeyi bir başlığa ve bir kuyruğa bölmek, özyinelemeli çağrılar, hepsi orada.
+Bu klasik fold modelidir, bu yüzden bunun bir fold olarak nasıl uygulanacağını görelim.
+
+~~~~ {.haskell: .ghci name="code"}
+findKey :: (Eq k) => k -> [(k,v)] -> Maybe v  
+findKey key = foldr (\(k,v) acc -> if key == k then Just v else acc) Nothing 
+~~~~
+
+**Not**: Okunması ve tanımlanması daha kolay olduğundan, özyinelemeyi açıkça yazmak yerine, bu standart liste özyineleme modeli için fold kullanmak genellikle daha iyidir.
+Herkes `foldr` çağrısını gördüklerinde bunun bir pas geçme olduğunu bilir, ancak açık özyinelemeyi okumak biraz daha düşünmeyi gerektirir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> findKey "penny" phoneBook  
+Just "853-2492"  
+ghci> findKey "betty" phoneBook  
+Just "555-2938"  
+ghci> findKey "wilma" phoneBook  
+Nothing  
+~~~~
+
+Tıkır tıkır çalışıyor! Kızın telefon numarası elimizde varsa, numarayı `Just`'tan alırız, aksi takdirde `Nothing` alırız.
+
+`Data.List`'ten `lookup` fonksiyonunu uyguladık. Bir key'e karşılık gelen value'yu bulmak istiyorsak, onu bulana kadar listenin tüm öğelerini taramamız gerekir.
+`Data.Map` modülü, çok daha hızlı ilişkilendirme listeleri sunar (çünkü ağaçlarla dahili olarak uygulanırlar) ve ayrıca birçok yardımcı fonksiyon sağlar.
+Şu andan itibaren, ilişkilendirme listeleri yerine haritalarla çalıştığımızı söyleyeceğiz.
+
+`Data.Map`, `Prelude` ve `Data.List` fonksiyonlarıyla çakışan fonksiyonları dışa aktardığı için, nitelikli bir içe aktarma yapacağız.
+
+~~~~ {.haskell: .ghci name="code"}
+import qualified Data.Map as Map  
+~~~~
+
+Bu import ifadesini bir komut dosyasına koyun ve ardından komut dosyasını GHCI aracılığıyla yükleyin.
+
+Haydi gidelim ve `Data.Map`'in bizim için ne sakladığını görelim! İşte fonksiyonların temel özeti.
+
+`fromList` fonksiyonu bir ilişkilendirme listesi alır (liste biçiminde) ve aynı ilişkilendirmelere sahip bir harita döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.fromList [("betty","555-2938"),("bonnie","452-2928"),("lucille","205-2928")]  
+fromList [("betty","555-2938"),("bonnie","452-2928"),("lucille","205-2928")]  
+ghci> Map.fromList [(1,2),(3,4),(3,2),(5,5)]  
+fromList [(1,2),(3,2),(5,5)]  
+~~~~
+
+Orijinal ilişkilendirme listesinde yinelenen anahtarlar varsa, kopyalar yalnızca atılır. Bu, `fromList`'in tür imzasıdır.
+
+~~~~ {.haskell: .ghci name="code"}
+Map.fromList :: (Ord k) => [(k, v)] -> Map.Map k v   
+~~~~
+
+`k` ve `v` türü çiftlerin bir listesini aldığını ve `k` türü anahtarlardan `v` türüne eşleyen bir harita döndürdüğünü söylüyor.
+Normal listelerle ilişkilendirme listeleri yaptığımızda, anahtarların yalnızca denkleştirilebilir olması gerektiğine (bunların türü `Eq` tür sınıfına aittir),
+ancak şimdi sıralanabilir olmaları gerektiğine dikkat edin. Bu, `Data.Map` modülündeki önemli bir kısıtlamadır.
+Anahtarların bir ağaçta düzenlenmesi için sıralanabilir olması gerekiyor.
+
+`Ord` tür sınıfının parçası olmayan anahtarlara sahip olmadığınız sürece key-value ilişkilendirmeleri için her zaman `Data.Map` kullanmalısınız.
+
+`empty` boş bir haritayı temsil eder. Hiçbir argüman almaz, sadece boş bir map döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.empty  
+fromList []  
+~~~~
+
+`insert` bir anahtar, bir değer ve bir harita alır ve sadece anahtar ve değer eklenmiş olarak eskisi gibi yeni bir harita verir. 
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.empty  
+fromList []  
+ghci> Map.insert 3 100 Map.empty  
+fromList [(3,100)]  
+ghci> Map.insert 5 600 (Map.insert 4 200 ( Map.insert 3 100  Map.empty))  
+fromList [(3,100),(4,200),(5,600)]  
+ghci> Map.insert 5 600 . Map.insert 4 200 . Map.insert 3 100 $ Map.empty  
+fromList [(3,100),(4,200),(5,600)]  
+~~~~
+
+Boş harita, `insert` ve bir fold kullanarak kendi `fromList`'imizi uygulayabiliriz. izleyin:
+
+~~~~ {.haskell: .ghci name="code"}
+fromList' :: (Ord k) => [(k,v)] -> Map.Map k v  
+fromList' = foldr (\(k,v) acc -> Map.insert k v acc) Map.empty
+~~~~
+
+Oldukça basit bir fold. Boş bir haritayla başlıyoruz ve ilerledikçe anahtar değer çiftlerini toplayıcıya yerleştirerek onu sağdan fold'luyoruz.
+
+`null`, haritanın boş olup olmadığını kontrol eder.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.null Map.empty  
+True  
+ghci> Map.null $ Map.fromList [(2,3),(5,5)]  
+False  
+~~~~
+
+`size` bir haritanın boyutunu bildirir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.size Map.empty  
+0  
+ghci> Map.size $ Map.fromList [(2,4),(3,3),(4,2),(5,4),(6,4)]  
+5  
+~~~~
+
+`singleton` bir anahtar ve bir değer alır ve tam olarak bir eşlemesi olan bir map oluşturur.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.singleton 3 9  
+fromList [(3,9)]  
+ghci> Map.insert 5 9 $ Map.singleton 3 9  
+fromList [(3,9),(5,9)]    
+~~~~
+
+`lookup` `Data.List` `lookup`'ı gibi çalışır, yalnızca haritada çalışır. Anahtar için bir şey bulursa `Just somethings`, bulamazsa `Nothing` döndürür.
+
+`member` bir predicate, anahtar ve bir harita alır ve anahtarın haritada olup olmadığını bildirir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.member 3 $ Map.fromList [(3,6),(4,3),(6,9)]  
+True  
+ghci> Map.member 3 $ Map.fromList [(2,5),(4,5)]  
+False    
+~~~~
+
+`map` ve `filter`, liste eşdeğerleri(list equivalents) gibi çalışır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.map (*100) $ Map.fromList [(1,1),(2,4),(3,9)]  
+fromList [(1,100),(2,400),(3,900)]  
+ghci> Map.filter isUpper $ Map.fromList [(1,'a'),(2,'A'),(3,'b'),(4,'B')]  
+fromList [(2,'A'),(4,'B')]  
+~~~~
+
+`toList`, `fromList`'in tersidir.
 
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.toList . Map.insert 9 2 $ Map.singleton 4 3  
+[(4,3),(9,2)]  
+~~~~
 
+`keys` ve `elems` sırasıyla anahtarların ve değerlerin listelerini döndürür. `keys`, `map fst . Map.toList`'e eşdeğerdir ve `elems`, `map snd . Map.toList`'e eşdeğerdir.
 
+`fromListWith` harika bir küçük fonksiyondur. `fromList` gibi davranır, yalnızca benzer anahtarları atmaz, 
+ancak onlarla ne yapılacağına karar vermek için kendisine sağlanan bir fonksiyonu kullanır. 
+Diyelim ki bir kız birkaç numaraya sahip olabilir ve buna benzer bir ilişki listemiz var.
 
+~~~~ {.haskell: .ghci name="code"}
+phoneBook =   
+    [("betty","555-2938")  
+    ,("betty","342-2492")  
+    ,("bonnie","452-2928")  
+    ,("patsy","493-2928")  
+    ,("patsy","943-2929")  
+    ,("patsy","827-9162")  
+    ,("lucille","205-2928")  
+    ,("wendy","939-8282")  
+    ,("penny","853-2492")  
+    ,("penny","555-2111")  
+    ]  
+~~~~
 
+Şimdi bunu bir haritaya koymak için `fromList`'i kullanırsak, birkaç rakamı kaybedeceğiz! İşte yapacağımız şey:
 
+~~~~ {.haskell: .ghci name="code"}
+phoneBookToMap :: (Ord k) => [(k, String)] -> Map.Map k String  
+phoneBookToMap xs = Map.fromListWith (\number1 number2 -> number1 ++ ", " ++ number2) xs  
+~~~~
 
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.lookup "patsy" $ phoneBookToMap phoneBook  
+"827-9162, 943-2929, 493-2928"  
+ghci> Map.lookup "wendy" $ phoneBookToMap phoneBook  
+"939-8282"  
+ghci> Map.lookup "betty" $ phoneBookToMap phoneBook  
+"342-2492, 555-2938" 
+~~~~
 
+Benzer bir anahtar bulunursa, geçirdiğimiz fonksiyon bu anahtarların değerlerini başka bir değerde birleştirmek için kullanılır.
+İlk olarak ilişkilendirme listesindeki tüm değerleri tekli olarak yapabiliriz ve sonra sayıları birleştirmek için `++` kullanabiliriz.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+~~~~ {.haskell: .ghci name="code"}
+phoneBookToMap :: (Ord k) => [(k, a)] -> Map.Map k [a]  
+phoneBookToMap xs = Map.fromListWith (++) $ map (\(k,v) -> (k,[v])) xs  
+~~~~
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.lookup "patsy" $ phoneBookToMap phoneBook  
+["827-9162","943-2929","493-2928"]  
+~~~~
+
+Oldukça temiz! Başka bir kullanım durumu, bir ilişkilendirme listesinden bir map oluşturuyorsak ve yinelenen bir anahtar bulunduğunda, 
+anahtar için en büyük değerin korunmasını isteriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.fromListWith max [(2,3),(2,5),(2,100),(3,29),(3,22),(3,11),(4,22),(4,15)]  
+fromList [(2,100),(3,29),(4,22)]  
+~~~~
+
+Veya aynı anahtarlar üzerinde değerleri birbirine eklemeyi seçebiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.fromListWith (+) [(2,3),(2,5),(2,100),(3,29),(3,22),(3,11),(4,22),(4,15)]  
+fromList [(2,108),(3,62),(4,37)]  
+~~~~
+
+`insertWith`, `fromListWith`'in `fromList`'e ne olduğunu eklemektir. Bir haritaya bir key-value çifti ekler, ancak bu harita zaten anahtarı içeriyorsa,
+ne yapılacağını belirlemek için ona iletilen fonksiyonu kullanır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Map.insertWith (+) 3 100 $ Map.fromList [(3,4),(5,103),(6,339)]  
+fromList [(3,104),(5,103),(6,339)]  
+~~~~
+
+Bunlar `Data.Map`'in sadece birkaç fonksiyonuydu. [Dokümantasyonda](https://downloads.haskell.org/ghc/latest/docs/html/libraries/containers-0.6.2.1/Data-Map.html) fonksiyonların tam listesini görebilirsiniz.
+
+
+
+Data.Set
+--------
+
+`Data.Set` modülü bize kümeler sunar. Matematikteki kümeler gibi. Kümeler, listeler ve haritalar arasında bir çeşit geçiş gibidir. Bir kümedeki tüm öğeler benzersizdir.
+Ve dahili olarak ağaçlarla uygulandıkları için (`Data.Map`'teki map'ler gibi), sıralanırlar. Üyeliği kontrol etmek, eklemek,
+silmek vb. Listelerle aynı şeyi yapmaktan çok daha hızlıdır. Kümelerle uğraşırken en yaygın işlem bir kümeye ekleme, üyeliği kontrol etme ve bir kümeyi listeye dönüştürmedir.
+
+`Data.Set`'teki isimler bir çok `Prelude` ve `Data.List` isimleriyle çakıştığından, qualified import yapıyoruz.
+
+Bu import ifadesini bir komut dosyasına koyun:
+
+
+~~~~ {.haskell: .ghci name="code"}
+import qualified Data.Set as Set  
+~~~~
+
+Ve sonra komut dosyasını GHCI aracılığıyla yükleyin.
+
+Diyelim ki iki parça metnimiz var. Her ikisinde de hangi karakterlerin kullanıldığını bulmak istiyoruz.
+
+~~~~ {.haskell: .ghci name="code"}
+text1 = "I just had an anime dream. Anime... Reality... Are they so different?"  
+text2 = "The old man left his garbage can out and now his trash is all over my lawn!"  
+~~~~
+
+`fromList` fonksiyonu beklediğiniz gibi çalışır. Bir liste alır ve bir kümeye dönüştürür.
+
+~~~~ {.haskell: .ghci name="code"}
+text1 = "I just had an anime dream. Anime... Reality... Are they so different?"  
+text2 = "The old man left his garbage can out and now his trash is all over my lawn!"  
+~~~~
+
+Gördüğünüz gibi, öğeler sıralı ve her öğe benzersizdir. Şimdi, her ikisinin de hangi öğeleri paylaştığını görmek için `intersection` fonksiyonunu kullanalım.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Set.intersection set1 set2  
+fromList " adefhilmnorstuy"  
+~~~~
+
+`difference` fonksiyonu, hangi harflerin ilk kümede olduğunu, ancak ikinci kümede olmadığını ve tersini görmek için kullanabiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Set.difference set1 set2  
+fromList ".?AIRj"  
+ghci> Set.difference set2 set1  
+fromList "!Tbcgvw"  
+~~~~
+
+Ya da `union` kullanarak her iki cümlede de kullanılan tüm unique harfleri görebiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Set.union set1 set2  
+fromList " !.?AIRTabcdefghijlmnorstuvwy" 
+~~~~
+
+`null`, `size`, `member`, `empty`, `singleton`, `insert` ve `delete` fonksiyonlarının tümü beklediğiniz gibi çalışır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Set.null Set.empty  
+True  
+ghci> Set.null $ Set.fromList [3,4,5,5,4,3]  
+False  
+ghci> Set.size $ Set.fromList [3,4,5,3,4,5]  
+3  
+ghci> Set.singleton 9  
+fromList [9]  
+ghci> Set.insert 4 $ Set.fromList [9,3,8,1]  
+fromList [1,3,4,8,9]  
+ghci> Set.insert 8 $ Set.fromList [5..10]  
+fromList [5,6,7,8,9,10]  
+ghci> Set.delete 4 $ Set.fromList [3,4,5,4,3,4,5]  
+fromList [3,5]  
+~~~~
+
+Ayrıca alt kümeleri veya uygun alt kümeleri de kontrol edebiliriz. B, A'nın yaptığı tüm öğeleri içeriyorsa, A kümesi B kümesinin bir alt kümesidir.
+B, A'nın yaptığı ancak daha fazla öğeye sahip tüm öğeleri içeriyorsa, A kümesi, B kümesinin uygun bir alt kümesidir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Set.fromList [2,3,4] `Set.isSubsetOf` Set.fromList [1,2,3,4,5]  
+True  
+ghci> Set.fromList [1,2,3,4,5] `Set.isSubsetOf` Set.fromList [1,2,3,4,5]  
+True  
+ghci> Set.fromList [1,2,3,4,5] `Set.isProperSubsetOf` Set.fromList [1,2,3,4,5]  
+False  
+ghci> Set.fromList [2,3,4,8] `Set.isSubsetOf` Set.fromList [1,2,3,4,5]  
+False  
+~~~~
+
+Ayrıca kümeler üzerinde `map` ve `filter` da yapabiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Set.filter odd $ Set.fromList [3,4,5,6,7,2,3,4]  
+fromList [3,5,7]  
+ghci> Set.map (+1) $ Set.fromList [3,4,5,6,7,2,3,4]  
+fromList [3,4,5,6,7,8]  
+~~~~
+
+Kümeler genellikle, bir listedeki yinelenenlerin bir listesini önce fromList ile bir küme haline getirip ardından `toList` ile bir
+listeye geri dönüştürerek ayıklamak için kullanılır. `Data.List` fonksiyonu `nub` zaten bunu yapıyor, ancak büyük listeler için kopyaları ayıklamak,
+onları bir kümeye sığdırırsanız ve daha sonra bunları `nub` kullanmaya kıyasla bir listeye dönüştürürseniz çok daha hızlıdır.
+Ancak `nub` kullanmak yalnızca liste öğelerinin türünün `Eq` tür sınıfının parçası olmasını gerektirir, oysa öğeleri bir kümeye sıkıştırmak istiyorsanız,
+listenin türü `Ord` tür sınıfı olur.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> let setNub xs = Set.toList $ Set.fromList xs  
+ghci> setNub "HEY WHATS CRACKALACKIN"  
+" ACEHIKLNRSTWY"  
+ghci> nub "HEY WHATS CRACKALACKIN"  
+"HEY WATSCRKLIN" 
+~~~~
+
+`setNub` genellikle büyük listelerdeki `nub`'dan daha hızlıdır, ancak görebileceğiniz gibi, `nub` listenin öğelerinin sırasını korurken `setNub` bunu yapmaz.
+
+
+Kendi modüllerinizi yapmak
+--------------------------
+
+Şimdiye kadar bazı harika modüllere baktık, ancak kendi modülümüzü nasıl oluşturabiliriz? Hemen hemen her programlama dili,
+kodunuzu birkaç dosyaya bölmenize olanak tanır ve Haskell de farklı değildir. Programlar oluştururken, benzer bir amaca yönelik fonksiyon 
+ve türleri alıp bunları bir modüle yerleştirmek iyi bir uygulamadır. Bu şekilde, modülünüzü içe aktararak bu fonksiyonları diğer programlarda
+kolayca yeniden kullanabilirsiniz.
+
+Birkaç geometrik nesnenin hacmini ve alanını hesaplamak için bazı fonksiyonlar sağlayan küçük bir modül yaparak kendi modüllerimizi nasıl oluşturabileceğimize bir bakalım.
+`Geometry.hs` adında bir dosya oluşturarak başlayacağız.
+
+Bir modülün fonksiyonları export ettiğini söylüyoruz. Bunun anlamı, bir modülü import ettiğimde, export ettiğim fonksiyonları kullanabilirim.
+Fonksiyonların dahili olarak çağırdığı fonksiyonları tanımlayabilir, ancak biz sadece export edilenleri görebilir ve kullanabiliriz.
+
+Bir modülün başında modül adını belirtiriz. `Geometry.hs` adında bir dosyamız varsa, modülümüze `Geometry` adını vermeliyiz.
+Daha sonra export edeceğimiz fonksiyonları belirliyoruz ve ardından fonksiyonları yazmaya başlayabiliriz. Öyleyse bununla başlayacağız.
+
+~~~~ {.haskell: .ghci name="code"}
+module Geometry  
+( sphereVolume  
+, sphereArea  
+, cubeVolume  
+, cubeArea  
+, cuboidArea  
+, cuboidVolume  
+) where  
+~~~~
+
+Gördüğünüz gibi küreler, küpler ve küpler için alanlar ve hacimler yapacağız. Devam edelim ve fonksiyonlarımızı tanımlayalım o zaman:
+
+~~~~ {.haskell: .ghci name="code"}
+module Geometry  
+( sphereVolume  
+, sphereArea  
+, cubeVolume  
+, cubeArea  
+, cuboidArea  
+, cuboidVolume  
+) where  
+  
+sphereVolume :: Float -> Float  
+sphereVolume radius = (4.0 / 3.0) * pi * (radius ^ 3)  
+  
+sphereArea :: Float -> Float  
+sphereArea radius = 4 * pi * (radius ^ 2)  
+  
+cubeVolume :: Float -> Float  
+cubeVolume side = cuboidVolume side side side  
+  
+cubeArea :: Float -> Float  
+cubeArea side = cuboidArea side side side  
+  
+cuboidVolume :: Float -> Float -> Float -> Float  
+cuboidVolume a b c = rectangleArea a b * c  
+  
+cuboidArea :: Float -> Float -> Float -> Float  
+cuboidArea a b c = rectangleArea a b * 2 + rectangleArea a c * 2 + rectangleArea c b * 2  
+  
+rectangleArea :: Float -> Float -> Float  
+rectangleArea a b = a * b  
+~~~~
+
+Burada oldukça standart bir geometri var. Yine de dikkat edilmesi gereken birkaç nokta var. Bir küp, bir küboid için yalnızca özel bir durum olduğundan, alanını ve hacmini,
+kenarları aynı uzunlukta olan bir küboid gibi ele alarak tanımladık. Ayrıca, bir dikdörtgenin alanını kenarlarının uzunluklarına göre hesaplayan `rectangleArea` adlı bir
+yardımcı fonksiyon tanımladık. Oldukça önemsiz çünkü sadece çarpma. Modüldeki fonksiyonlarımızda (yani `cuboidArea` ve `cuboidVolume`) kullandığımıza dikkat edin, 
+ancak export etmedik! Modülümüzün sadece üç boyutlu nesnelerle ilgilenmek için fonksiyonlar sunmasını istediğimiz için, `rectangleArea` kullandık ama dışarı aktarmadık.
+
+Bir modül oluştururken, genellikle uygulamanın gizlenmesi için modülümüze sadece bir tür arayüz görevi gören fonksiyonları dışa aktarırız.
+Birisi `Geometry` modülümüzü kullanıyorsa, export etmediğimiz fonksiyonlarla ilgilenmeleri gerekmez.
+Bu fonksiyonları tamamen değiştirmeye veya daha yeni bir sürümde silmeye karar verebiliriz (`rectangleArea`'yı silebilir ve bunun yerine sadece `*` kullanabiliriz) 
+ve ilk etapta bunları export etmediğimiz için kimse aldırmayacaktır.
+
+Modülümüzü kullanmak için sadece şunları yapıyoruz:
+
+~~~~ {.haskell: .ghci name="code"}
+import Geometry    
+~~~~
+
+`Geometry.hs`, onu import eden programla aynı klasörde olmalıdır.
+
+Modüllere ayrıca hiyerarşik yapılar da verilebilir. Her modülün bir takım alt modülleri olabilir ve kendilerine ait alt modülleri olabilir.
+Bu fonksiyonu bölümlere ayıralım, böylece `Geometry`, her nesne türü için bir tane olmak üzere üç alt modülü olan bir modüldür.
+
+Önce `Geometry` adında bir klasör oluşturacağız. Başkent G'ye dikkat edin. İçine üç dosya yerleştireceğiz: `Sphere.hs`, `Cuboid.hs` ve `Cube.hs`. İşte dosyalar içerecekler:
+
+`Sphere.hs`
+
+~~~~ {.haskell: .ghci name="code"}
+module Geometry.Sphere  
+( volume  
+, area  
+) where  
+  
+volume :: Float -> Float  
+volume radius = (4.0 / 3.0) * pi * (radius ^ 3)  
+  
+area :: Float -> Float  
+area radius = 4 * pi * (radius ^ 2)  
+~~~~
+
+`Cuboid.hs`
+
+~~~~ {.haskell: .ghci name="code"}
+module Geometry.Cuboid  
+( volume  
+, area  
+) where  
+  
+volume :: Float -> Float -> Float -> Float  
+volume a b c = rectangleArea a b * c  
+  
+area :: Float -> Float -> Float -> Float  
+area a b c = rectangleArea a b * 2 + rectangleArea a c * 2 + rectangleArea c b * 2  
+  
+rectangleArea :: Float -> Float -> Float  
+rectangleArea a b = a * b  
+~~~~
+
+`Cube.hs`
+
+~~~~ {.haskell: .ghci name="code"}
+module Geometry.Cube  
+( volume  
+, area  
+) where  
+  
+import qualified Geometry.Cuboid as Cuboid  
+  
+volume :: Float -> Float  
+volume side = Cuboid.volume side side side  
+  
+area :: Float -> Float  
+area side = Cuboid.area side side side  
+~~~~
+
+İlk önce `Geometry.Sphere`. Onu `Geometry` adlı bir klasöre nasıl yerleştirdiğimize ve modül adını `Geometry.Sphere` olarak tanımladığımıza dikkat edin.
+Cuboid için de aynısını yaptık. Ayrıca, her üç alt modülde de aynı adlarla fonksiyonları tanımladığımıza dikkat edin.
+Bunu yapabiliriz çünkü bunlar ayrı modüllerdir. `Geometry.Cuboid`'deki fonksiyonları `Geometry.Cube`'de kullanmak istiyoruz,
+ancak doğrudan `import Geometry.Cuboid` diyemeyiz çünkü fonksiyonları `Geometry.Cube` ile aynı isimlerle export eder.
+Bu sebeple qualified import yapıyoruz ve her şey yolunda gidiyor.
+
+`Geometry` klasörüyle aynı seviyede olan bir dosyadaysak şunu söyleyebiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+import Geometry.Sphere  
+~~~~
+
+Ve sonra `area` ve `volume` diyebiliriz ve bize bir kürenin alan (area) ve hacimini(volume) verirler. Ve bu modüllerden iki veya daha fazlasını idare etmek istiyorsak, 
+aynı adlarla fonksiyonları export etmek için qualified import yapmalıyız. Bu yüzden şöyle bir şey yapıyoruz:
+
+~~~~ {.haskell: .ghci name="code"}
+import qualified Geometry.Sphere as Sphere  
+import qualified Geometry.Cuboid as Cuboid  
+import qualified Geometry.Cube as Cube  
+~~~~
+
+Ve sonra `Sphere.area`, `Sphere.volume`, `Cuboid.area`, vb. diyerek çağırabiliriz. ve her biri karşılık gelen nesnenin area'sını veya volume'ünü hesaplayacaktır.
+
+Bir dahaki sefere kendinizi gerçekten büyük ve birçok fonksiyonu olan bir dosya yazarken bulduğunuzda, 
+hangi fonksiyonların bazı ortak amaca hizmet ettiğini görmeye çalışın ve sonra bunları kendi modüllerine yerleştirip koyamayacağınıza bakın.
+Bir dahaki sefere aynı işlevselliğin(functionality) bir kısmını gerektiren bir program yazarken modülünüzü import edebileceksiniz.
 

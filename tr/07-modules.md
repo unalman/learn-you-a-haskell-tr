@@ -14,7 +14,7 @@ Her biri bir çeşit amaca sahip olan birkaç parçaya bölünerek kod yazma iş
 
 Haskell standart kütüphanesi modüllere ayrılmıştır, her biri bir şekilde ilişkili olan ve bazı ortak amaca hizmet eden fonksiyonlar ve türleri içerir.
 Listeleri işlemek için bir modül, eşzamanlı programlama(concurrency programming) için bir modül, karmaşık sayılarla uğraşmak için bir modül vb.
-Şimdiye kadar ele aldığımız tüm fonksiyonlar, türler ve tür sınıfları, varsayılan olarak içe aktarılan Prelude modülünün bir parçasıydı.
+Şimdiye kadar ele aldığımız tüm fonksiyonlar, türler ve tür sınıfları, varsayılan olarak içe aktarılan `Prelude` modülünün bir parçasıydı.
 Bu bölümde, birkaç yararlı modülü ve sahip oldukları fonksiyonları inceleyeceğiz. Ama önce, modülleri nasıl içe aktaracağımızı(import) göreceğiz.
 
 Haskell betiğindeki modülleri içe aktarmanın sözdizimi `import <module name>` şeklindedir. Bu, herhangi bir fonksiyonu tanımlamadan önce yapılmalıdır, 
@@ -78,24 +78,508 @@ sevdiği normal filter'ı ifade eder.
 Ancak bu modüldeki her fonksiyonun önüne `Data.Map` yazmak biraz sıkıcıdır. Bu nedenle, qualified import daha kısa bir adla yeniden adlandırabiliriz:
 
 ~~~~ {.haskell: .ghci name="code"}
-import qualified Data.Map  
+import qualified Data.Map as M  
+~~~~
+
+`Data.Map` `filter` fonksiyonuna nasıl referans verilir, sadece `M.filter` kullanıyoruz.
+
+Standart kitaplıkta hangi modüllerin olduğunu görmek için bu [kullanışlı referansı kullanın](https://downloads.haskell.org/~ghc/latest/docs/html/libraries/).
+Yeni Haskell bilgisi edinmenin harika bir yolu, standart kitaplık referansına tıklayıp modülleri ve fonksiyonlarını keşfetmektir.
+Her modül için Haskell kaynak kodununu da görüntüleyebilirsiniz.
+Bazı modüllerin kaynak kodunu okumak, Haskell'i öğrenmek ve sağlam bir fikir edinmek için gerçekten iyi bir yoldur.
+
+Fonksiyonları aramak veya nerede bulunduklarını öğrenmek için [Hoogle'ı](http://haskell.org/hoogle) kullanın.
+Gerçekten harika bir Haskell arama motoru, ada, modül adına veya hatta tür imzasını yazarak arama yapabilirsiniz.
+
+
+Data.List
+---------
+
+`Data.List` modülü elbette listelerle ilgilidir. Onlarla başa çıkmak için çok faydalı bazı fonksiyonlar sağlar.
+`Prelude` modülü, kolaylık sağlamak için `Data.List`'ten bazı fonksiyonları dışa aktardığı için, bazı fonksiyonlarıyla (`map` ve `filter` gibi) zaten tanıştık.
+`Data.List`'i quelified bir import yoluyla içe aktarmanız gerekmez, çünkü `Prelude`'un `Data.List`'ten zaten çaldıkları dışında herhangi bir `Prelude` adıyla çakışmaz.
+Daha önce karşılaşmadığımız bazı fonksiyonlara bir göz atalım.
+
+`intersperse`, bir öğeyi ve bir listeyi alır ve ardından bu öğeyi listedeki her öğe çifti arasına yerleştirir. İşte bir gösterimi:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> intersperse '.' "MONKEY"  
+"M.O.N.K.E.Y"  
+ghci> intersperse 0 [1,2,3,4,5,6]  
+[1,0,2,0,3,0,4,0,5,0,6]  
+~~~~
+
+`intercalate`, bir liste listesi ve bir liste alır. Daha sonra bu listeyi tüm bu listelerin arasına ekler ve ardından sonucu düzleştirir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> intercalate " " ["hey","there","guys"]  
+"hey there guys"  
+ghci> intercalate [0,0,0] [[1,2,3],[4,5,6],[7,8,9]]  
+[1,2,3,0,0,0,4,5,6,0,0,0,7,8,9]  
+~~~~
+
+`transpose` bir liste listesini transpoze eder. Listelerin bir listesine 2D matris olarak bakarsanız, sütunlar satırlar olur ve bunun tersi de geçerlidir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> transpose [[1,2,3],[4,5,6],[7,8,9]]  
+[[1,4,7],[2,5,8],[3,6,9]]  
+ghci> transpose ["hey","there","guys"]  
+["htg","ehu","yey","rs","e"]  
+~~~~
+
+Diyelim ki 3x2 + 5x + 9, 10x3 + 9 and 8x3 + 5x2 + x - 1 polinomları var ve bunları bir araya getirmek istiyoruz. Haskell'de temsil etmek için `[0,3,5,9]`, `[10,0,0,9]` ve
+`[8,5,1,-1]` listelerini kullanabiliriz. Şimdi onları eklemek için tek yapmamız gereken şudur:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> map sum $ transpose [[0,3,5,9],[10,0,0,9],[8,5,1,-1]]  
+[18,8,6,17]  
+~~~~
+
+Bu üç listeyi transpoze ettiğimizde, üçüncü kuvvetler ilk satırda, ikinci kuvvetler ikinci sırada vb. Buna `sum`'ı eşlemek, istediğimiz sonucu üretir.
+
+![legolists](../img/legolists.png)
+`foldl'` ve `foldl1'` ilgili tembel enkarnasyonlarının daha katı versiyonlarıdır. Gerçekten büyük listelerde lazy fold'lar kullanırken, 
+genellikle bir yığın(stack) taşması hatası alabilirsiniz. Bunun suçlusu, fold'ların lazy doğası nedeniyle,
+fold gerçekleşirken toplayıcı değerinin aslında güncellenmemesidir. Gerçekte olan şey, toplayıcı türünün,
+sonucu gerçekten üretmesi istendiğinde değerini hesaplayacağına dair bir söz vermesidir (aynı zamanda thunk olarak da adlandırılır).
+Bu, her ara toplayıcı için olur ve tüm bu thunks yığınınızdan taşar. 
+Sıkı (strict) fold'lar lazy herifler değildir ve yığınınızı thunks ile doldurmak yerine aslında ara değerleri hesaplarlar.
+Bu nedenle, lazy fold'lar yaparken yığın taşması (stack overflow) hataları alırsanız, Sıkı sürümlerine geçmeyi deneyin.
+
+`concat`, bir liste listesini yalnızca bir öğe listesine düzleştirir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> concat ["foo","bar","car"]  
+"foobarcar"  
+ghci> concat [[3,4,5],[2,3,4],[2,1,1]]  
+[3,4,5,2,3,4,2,1,1]  
+~~~~
+
+Yalnızca bir seviye yuva kaldırır. Dolayısıyla, liste listelerinin bir listesi olan `[[[2,3],[3,4,5],[2]],[[2,3],[3,4]]]`'yi tamamen düzleştirmek istiyorsanız,
+onu iki kez birleştirmeniz gerekir.
+
+`concatMap` yapmak, önce bir fonksiyonu bir listeye eşlemek ve ardından listeyi `concat` ile birleştirmekle aynıdır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> concatMap (replicate 4) [1..3]  
+[1,1,1,1,2,2,2,2,3,3,3,3]  
+~~~~
+
+`and`, boolean değerlerinin bir listesini alır ve yalnızca listedeki tüm değerler `True` ise `True` döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> and $ map (>4) [5,6,7,8]  
+True  
+ghci> and $ map (==4) [4,4,4,3,4]  
+False  
+~~~~
+
+`or`, `and` gibidir, yalnızca listedeki boole değerlerinden herhangi biri `True` ise `True` döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> or $ map (==4) [2,3,4,5,6,1]  
+True  
+ghci> or $ map (>4) [1,2,3]  
+False  
+~~~~
+
+`any` ve `all` bir predicate alır ve ardından bir listedeki herhangi bir öğenin veya tüm öğelerin sırasıyla predicate'i karşılayıp karşılamadığını kontrol eder.
+Genellikle bir listeyi eşleştirmek ve ardından `and` veya `or` yapmak yerine bu iki fonksiyonu kullanırız.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> any (==4) [2,3,5,6,1,4]  
+True  
+ghci> all (>4) [6,9,10]  
+True  
+ghci> all (`elem` ['A'..'Z']) "HEYGUYSwhatsup"  
+False  
+ghci> any (`elem` ['A'..'Z']) "HEYGUYSwhatsup"  
+True   
+~~~~
+
+`iterate` bir fonksiyon ve bir başlangıç değeri alır. fonksiyonu başlangıç değerine uygular, sonra o fonksiyonu sonuca uygular, sonra fonksiyonu o sonuca tekrar uygular, vb.
+Tüm sonuçları sonsuz bir liste biçiminde döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> take 10 $ iterate (*2) 1  
+[1,2,4,8,16,32,64,128,256,512]  
+ghci> take 3 $ iterate (++ "haha") "haha"  
+["haha","hahahaha","hahahahahaha"]   
+~~~~
+
+`splitAt` bir sayı ve bir liste alır. Ardından, listeyi bu kadar çok öğeye böler ve ortaya çıkan iki listeyi bir tuple(demet) halinde döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> splitAt 3 "heyman"  
+("hey","man")  
+ghci> splitAt 100 "heyman"  
+("heyman","")  
+ghci> splitAt (-3) "heyman"  
+("","heyman")  
+ghci> let (a,b) = splitAt 3 "foobar" in b ++ a  
+"barfoo"  
+~~~~
+
+`takeWhile` gerçekten yararlı küçük bir fonksiyondur. Predicate tutarken bir listeden öğeler alır ve ardından predicate'i karşılamayan bir öğe ile karşılaşıldığında kesilir. 
+Görünüşe göre bu çok faydalı.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> takeWhile (>3) [6,5,4,3,2,1,2,3,4,5,4,3,2,1]  
+[6,5,4]  
+ghci> takeWhile (/=' ') "This is a sentence"  
+"This" 
+~~~~
+
+10.000'in altındaki tüm üçüncü güçlerin toplamını bilmek istediğimizi varsayalım. `(^3)`'ü `[1..]` ile eşleyemeyiz,
+bir filter uygulayamayız ve sonra bunu özetlemeye çalışamayız çünkü sonsuz bir listeyi filtrelemek asla bitmez.
+Buradaki tüm unsurların yükseldiğini biliyor olabilirsiniz, ancak Haskell değil. Bu yüzden bunu yapabiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> sum $ takeWhile (<10000) $ map (^3) [1..]  
+53361  
+~~~~
+
+Sonsuz bir listeye `(^3)` uygularız ve sonra 10.000'in üzerinde bir elemanla karşılaşıldığında liste kesilir. Şimdi kolayca toplayabilirsiniz.
+
+`dropWhile` benzer olsa da, predicate yalnızca `True` ise tüm öğeleri bırakır. Predicate `False`'a eşitlendiğinde, listenin geri kalanını döndürür. 
+Son derece kullanışlı ve hoş bir fonksiyon.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> dropWhile (/=' ') "This is a sentence"  
+" is a sentence"  
+ghci> dropWhile (<3) [1,2,2,2,3,4,5,4,3,2,1]  
+[3,4,5,4,3,2,1]   
+~~~~
+
+Bir hisse senedinin tarihe göre değerini temsil eden bir liste veriliyor. Liste, ilk bileşeni hisse senedi değeri,
+ikincisi yıl, üçüncüsü ay ve dördüncüsü tarih olan demetlerden oluşur. Hisse senedi değerinin ilk bin doları ne zaman aştığını bilmek istiyoruz!
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> let stock = [(994.4,2008,9,1),(995.2,2008,9,2),(999.2,2008,9,3),(1001.4,2008,9,4),(998.3,2008,9,5)]  
+ghci> head (dropWhile (\(val,y,m,d) -> val < 1000) stock)  
+(1001.4,2008,9,4)     
+~~~~
+
+`span`, `takeWhile` gibi bir tür, yalnızca bir çift liste döndürür. 
+İlk liste, aynı predicate ve aynı liste ile çağrılsaydı `takeWhile`'dan elde edilen listenin içereceği her şeyi içerir. İkinci liste, listenin düşürülen kısmını içerir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> let (fw, rest) = span (/=' ') "This is a sentence" in "First word:" ++ fw ++ ", the rest:" ++ rest  
+"First word: This, the rest: is a sentence"   
+~~~~
+
+`span`, predicate `True` olduğunda listeyi kapsarken, break, predicate ilk `True` olduğunda onu kırar. `break p` yapmak, `span (not . p)` yapmaya eşdeğerdir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> break (==4) [1,2,3,4,5,6,7]  
+([1,2,3],[4,5,6,7])  
+ghci> span (/=4) [1,2,3,4,5,6,7]  
+([1,2,3],[4,5,6,7])  
+~~~~
+
+`break` kullanılırken, sonuçtaki ikinci liste predicate'i karşılayan ilk öğe ile başlayacaktır.
+
+`sort` basitçe bir listeyi sıralar. Listedeki elemanların türü `Ord` tür sınıfının bir parçası olmalıdır, çünkü bir listenin elemanları bir tür sıraya konulamazsa,
+o zaman liste sıralanamaz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> sort [8,5,3,2,1,6,4,2]  
+[1,2,2,3,4,5,6,8]  
+ghci> sort "This will be sorted soon"  
+"    Tbdeehiillnooorssstw"  
+~~~~
+
+`group` bir listeyi alır ve bitişik öğeleri eşitlerse alt listelerde gruplandırır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> group [1,1,1,1,2,2,2,2,3,3,2,2,2,5,6,7]  
+[[1,1,1,1],[2,2,2,2],[3,3],[2,2,2],[5],[6],[7]]  
+~~~~
+
+Bir listeyi gruplamadan önce sıralarsak, her bir öğenin listede kaç kez göründüğünü öğrenebiliriz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> map (\l@(x:xs) -> (x,length l)) . group . sort $ [1,1,1,1,2,2,2,2,3,3,2,2,2,5,6,7]  
+[(1,4),(2,7),(3,2),(5,1),(6,1),(7,1)]  
+~~~~
+
+`inits` ve `tails`, `init` ve `tail` gibidir, ancak bunu geriye hiçbir şey kalmayana kadar yinelemeli olarak bir listeye uygularlar. Gözlemleyin.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> inits "w00t"  
+["","w","w0","w00","w00t"]  
+ghci> tails "w00t"  
+["w00t","00t","0t","t",""]  
+ghci> let w = "w00t" in zip (inits w) (tails w)  
+[("","w00t"),("w","00t"),("w0","0t"),("w00","t"),("w00t","")]   
+~~~~
+
+Bir alt liste için bir search list uygulamak için bir fold kullanalım.
+
+~~~~ {.haskell: .ghci name="code"}
+search :: (Eq a) => [a] -> [a] -> Bool  
+search needle haystack =   
+    let nlen = length needle  
+    in  foldl (\acc x -> if take nlen x == needle then True else acc) False (tails haystack)  
+~~~~
+
+Önce aradığımız liste ile `tails` diyoruz. Sonra her kuyruğun üzerinden geçip aradığımız şeyle başlayıp başlamadığına bakarız.
+
+Bununla, aslında `isInfixOf` gibi davranan bir fonksiyon yaptık. 
+`isInfixOf`, bir liste içinde bir alt liste arar ve aradığımız alt liste hedef listenin içinde bir yerdeyse `True` döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> "cat" `isInfixOf` "im a cat burglar"  
+True  
+ghci> "Cat" `isInfixOf` "im a cat burglar"  
+False  
+ghci> "cats" `isInfixOf` "im a cat burglar"  
+False
+~~~~
+
+`isPrefixOf` ve `isSuffixOf` sırasıyla bir listenin başında ve sonunda bir alt liste arar.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> "hey" `isPrefixOf` "hey there!"  
+True  
+ghci> "hey" `isPrefixOf` "oh hey there!"  
+False  
+ghci> "there!" `isSuffixOf` "oh hey there!"  
+True  
+ghci> "there!" `isSuffixOf` "oh hey there"  
+False  
+~~~~
+
+`elem` ve `notElem` bir elemanın listede olup olmadığını kontrol eder.
+
+`partition` bir liste ve bir predicate alır ve bir çift liste döndürür. Sonuçtaki ilk liste predicate karşılayan tüm öğeleri içerir, ikincisi olmayanların hepsini içerir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> partition (`elem` ['A'..'Z']) "BOBsidneyMORGANeddy"  
+("BOBMORGAN","sidneyeddy")  
+ghci> partition (>3) [1,3,5,6,3,2,1,0,3,7]  
+([5,6,7],[1,3,3,2,1,0,3])    
+~~~~
+
+Bunun `span` ve `break`'dan ne kadar farklı olduğunu anlamak önemlidir:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> span (`elem` ['A'..'Z']) "BOBsidneyMORGANeddy"  
+("BOB","sidneyMORGANeddy")    
+~~~~
+
+`span` ve `break`, predicate'i karşılamayan ve karşılamayan ilk öğeyle karşılaştıklarında yapılırken, `partition` tüm listeyi gözden geçirir ve predicate'e göre böler.
+
+`find` bir liste ve bir predicate alır ve predicate'i karşılayan ilk öğeyi döndürür. Ancak Maybe değeriyle sarılmış öğeyi döndürür.
+Bir sonraki bölümde cebirsel veri türlerini daha derinlemesine ele alacağız, ancak şimdilik bilmeniz gereken: `Maybe` değeri `Just something` veya `Nothing` olabilir.
+Bir listenin boş bir liste veya bazı öğeler içeren bir liste olabileceği gibi, Maybe değeri hiç öğe olmayabilir veya tek bir öğe olabilir.
+Ve tamsayıların bir listesinin türü gibi, örneğin, `[Int]`, bir tam sayıya sahip olmanın türü de `Maybe Int` dir.
+Her neyse, bir dönüş için `find` fonksiyonumuzu alalım.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> find (>4) [1,2,3,4,5,6]  
+Just 5  
+ghci> find (>9) [1,2,3,4,5,6]  
+Nothing  
+ghci> :t find  
+find :: (a -> Bool) -> [a] -> Maybe a  
+~~~~
+
+`find` türüne dikkat edin. Sonucu `Maybe a`'dır. Bu, `[a]` türüne sahip olmaya benzer, yalnızca `Maybe` türündeki bir değer, hiçbir öğe veya bir öğe içerebilir, 
+oysa bir liste hiçbir öğe, bir öğe veya birkaç öğe içeremez.
+
+Stoklarımız 1000 doları aştı ilk kez aradığımızı hatırlayın. `head (dropWhile (\(val,y,m,d) -> val < 1000) stock)` yaptık. `head`'in gerçekten güvenli olmadığını unutmayın.
+Stoklarımız 1000 doları geçmezse ne olur? `dropWhile` uygulamamız boş bir liste döndürür ve boş bir listenin başını almak bir hatayla sonuçlanır.
+Ancak, bunu `find (\(val,y,m,d) -> val > 1000) stock` olarak yeniden yazarsak çok daha güvenli oluruz.
+Eğer hissemiz 1000 $'ın üzerine çıkmasaydı (yani hiçbir öğe predicate'i karşılamazsa), `Nothing` alırdık.
+Ama bu listede geçerli bir cevap vardı, diyelim ki, `Just (1001.4,2008,9,4)`.
+
+`elemIndex` bir tür elem'dir, ancak boolean bir değer döndürmez. Belki aradığımız öğenin dizinini döndürür. Bu öğe listemizde yoksa `Nothing` döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> :t elemIndex  
+elemIndex :: (Eq a) => a -> [a] -> Maybe Int  
+ghci> 4 `elemIndex` [1,2,3,4,5,6]  
+Just 3  
+ghci> 10 `elemIndex` [1,2,3,4,5,6]  
+Nothing  
+~~~~
+
+`elemIndices`, `elemIndex` gibidir, sadece aradığımız elemanın listemizde birkaç kez ekilmesi durumunda index'lerin bir listesini döndürür.
+Index'leri temsil etmek için bir liste kullandığımız için, `Maybe` türüne ihtiyacımız yoktur, çünkü başarısızlık boş liste olarak temsil edilebilir, 
+bu da `Nothing` ile eşanlamlıdır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> ' ' `elemIndices` "Where are the spaces?"  
+[5,9,13]  
+~~~~
+
+`findIndex`, `find` gibidir, ancak predicate'i karşılayan ilk öğenin dizinini döndürebilir. 
+`findIndices`, predicate'i karşılayan tüm öğelerin dizinlerini bir liste biçiminde döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> findIndex (==4) [5,3,2,1,6,4]  
+Just 5  
+ghci> findIndex (==7) [5,3,2,1,6,4]  
+Nothing  
+ghci> findIndices (`elem` ['A'..'Z']) "Where Are The Caps?"  
+[0,6,10,14]  
+~~~~
+
+`zip` ve `zipWith`'i zaten ele aldık. Bir demet halinde veya binary fonksiyon (iki parametre alan böyle bir fonksiyon) iki listeyi bir araya getirdiklerini belirttik.
+Peki ya üç listeyi bir araya getirmek istersek? Veya üç parametre alan bir fonksiyonla üç listeyi zip'leyin? Bunun için `zip3`, `zip4` vb. ve `zipWith3`, `zipWith4`, vb.
+Bu varyantlar 7'ye kadar çıkar. Bu bir hack gibi görünse de gayet iyi çalışıyor çünkü 8 listeyi bir arada sıkıştırmak istediğinizde pek çok zaman yok.
+Ayrıca sonsuz sayıda listeyi sıkıştırmanın çok akıllıca bir yolu var, ancak henüz bunu kapsayacak kadar gelişmiş değiliz.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> zipWith3 (\x y z -> x + y + z) [1,2,3] [4,5,2,2] [2,2,3]  
+[7,9,8]  
+ghci> zip4 [2,3,3] [2,2,2] [5,5,3] [2,2,2]  
+[(2,2,5,2),(3,2,5,2),(3,2,3,2)]  
+~~~~
+
+Normal sıkıştırmada olduğu gibi, sıkıştırılmakta olan en kısa listeden daha uzun olan listeler boyuta indirilir.
+
+`lines`, dosyalar veya bir yerden girdilerle uğraşırken kullanışlı bir fonksiyondur. Bir string alır ve bu string'in her satırını ayrı bir listede döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> lines "first line\nsecond line\nthird line"  
+["first line","second line","third line"]  
+~~~~
+
+`'\n'` bir unix satırsonu karakteridir. Ters eğik çizgilerin Haskell string'lerinde ve karakterlerinde özel bir anlamı vardır.
+
+`unlines`, `lines`'ın ters fonksiyonudur. Stirng'lerin bir listesini alır ve onları bir `'\n'` kullanarak birleştirir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> unlines ["first line", "second line", "third line"]  
+"first line\nsecond line\nthird line\n"   
+~~~~
+
+`words` ve `unwords`'ler, bir metin satırını kelimelere ayırmak veya bir kelime listesini bir metne birleştirmek içindir. Çok kullanışlı.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> words "hey these are the words in this sentence"  
+["hey","these","are","the","words","in","this","sentence"]  
+ghci> words "hey these           are    the words in this\nsentence"  
+["hey","these","are","the","words","in","this","sentence"]  
+ghci> unwords ["hey","there","mate"]  
+"hey there mate"    
+~~~~
+
+`nub`'dan daha önce bahsetmiştik. Bir liste alır ve yinelenen öğeleri ayıklayarak, her öğesi benzersiz bir kar tanesi olan bir liste döndürür!
+fonksiyonun bir tür garip adı var. nub'ın küçük bir yumru veya bir şeyin temel parçası anlamına geldiği ortaya çıktı.
+Bana göre fonksiyon isimleri için yaşlı kelimeleri yerine gerçek kelimeleri kullanmalılar.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> nub [1,2,3,4,3,2,1,2,3,4,3,2,1]  
+[1,2,3,4]  
+ghci> nub "Lots of words and stuff"  
+"Lots fwrdanu"    
+~~~~
+
+`delete`, bir öğeyi ve bir listeyi alır ve bu öğenin listedeki ilk oluşumunu siler.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> delete 'h' "hey there ghang!"  
+"ey there ghang!"  
+ghci> delete 'h' . delete 'h' $ "hey there ghang!"  
+"ey tere ghang!"  
+ghci> delete 'h' . delete 'h' . delete 'h' $ "hey there ghang!"  
+"ey tere gang!"  
+~~~~
+
+`\\` liste farkı fonksiyondur. Temelde belirli bir fark gibi davranır. Sağ taraftaki listedeki her öğe için, soldaki eşleşen bir öğeyi kaldırır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> [1..10] \\ [2,5,9]  
+[1,3,4,6,7,8,10]  
+ghci> "Im a big baby" \\ "big"  
+"Im a  baby"   
+~~~~
+
+`[1..10] \\ [2,5,9]` yapmak `delete 2 . delete 5 . delete 9 $ [1..10]` yapmak gibidir.
+
+`union` aynı zamanda kümelerdeki bir fonksiyon gibi davranır. İki listenin birleşimini döndürür. 
+İkinci listedeki her öğeyi hemen hemen gözden geçirir ve henüz girmemişse ilkine ekler. Yine de dikkatli olun, kopyalar ikinci listeden kaldırılır!
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> "hey man" `union` "man what's up"  
+"hey manwt'sup"  
+ghci> [1..7] `union` [5..10]  
+[1,2,3,4,5,6,7,8,9,10]     
+~~~~
+
+`intersect`, küme kesişimi gibi çalışır. Yalnızca her iki listede de bulunan öğeleri döndürür.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> [1..7] `intersect` [5..10]  
+[5,6,7]   
+~~~~
+
+`insert`, bir elemanı ve sıralanabilen elemanların bir listesini alır ve onu bir sonraki elemandan küçük veya ona eşit olduğu son konuma ekler.
+Başka bir deyişle, `insert` listenin başında başlayacak ve daha sonra eklediğimiz öğeye eşit veya ondan büyük bir öğe bulana kadar devam edecek
+ve onu öğeden hemen önce ekleyecektir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> insert 4 [3,5,1,2,8,2]  
+[3,4,5,1,2,8,2]  
+ghci> insert 4 [1,3,4,4,1]  
+[1,3,4,4,4,1]  
+~~~~
+
+`4`, ilk örnekte `3`'ten hemen sonra ve `5`'ten önce ve ikinci örnekte `3` ile `4` arasına yerleştirilir.
+
+Sıralı bir listeye eklemek için `insert` kullanırsak, ortaya çıkan liste sıralı tutulacaktır.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> insert 4 [1,2,3,5,6,7]  
+[1,2,3,4,5,6,7]  
+ghci> insert 'g' $ ['a'..'f'] ++ ['h'..'z']  
+"abcdefghijklmnopqrstuvwxyz"  
+ghci> insert 3 [1,2,4,3,2,1]  
+[1,2,3,4,3,2,1]   
+~~~~
+
+`length`, `take`, `drop`, `splitAt`, `!!` ve `replicate`'in ortak yanı, 
+`Integral` veya `Num` tür sınıfının bir parçası olan herhangi bir türü almış olsalar daha genel ve kullanılabilir olsalar bile, 
+parametrelerinden biri olarak bir Int almaları (veya bir `Int` döndürmeleri) olmasıdır. fonksiyonlar hakkında). Bunu tarihsel nedenlerle yapıyorlar.
+Ancak, bunu düzeltmek büyük olasılıkla mevcut birçok kodu bozacaktır.
+Bu nedenle `Data.List`, `genericLength`, `genericTake`, `genericDrop`, `genericSplitAt`, `genericIndex` ve `genericReplicate` adlı daha genel eşdeğerlerine sahiptir.
+Örneğin `length`'in tür imzası `length :: [a] -> Int`'dir. `let xs = [1..6] in sum xs / length xs` yaparak bir sayı listesinin ortalamasını almaya çalışırsak,
+tür hatası alırdık, çünkü `/` sembolünü `Int`'lerde kullanamayız. Öte yandan `genericLength`, `genericLength :: (Num a) => [b] -> a` tür imzasına sahiptir.
+Bir `Num` bir kayan noktalı sayı gibi davranabildiğinden, ortalamayı `let xs = [1..6] in sum xs / genericLength xs` yaparak elde etmek gayet iyi sonuç verir.
+
+`nub`, `delete`, `union`, `intersect` ve `group` fonksiyonlarının tümü, `nubBy`, `deleteBy`, `unionBy`, `intersectBy` ve `groupBy` adında daha genel karşılıklarına sahiptir.
+Aralarındaki fark, ilk fonksiyon kümesinin eşitliği test etmek için `==` kullanmasıdır, 
+oysa *By* fonksiyonları bir eşitlik fonksiyonu alır ve ardından bu eşitlik fonksiyonunu kullanarak bunları karşılaştırır. `group`, `groupBy (==)` ile aynıdır.
+
+Örneğin, her saniye için bir fonksiyonun değerini açıklayan bir listemiz olduğunu varsayalım.
+Değerin ne zaman sıfırın altında olduğuna ve ne zaman üstüne çıktığına göre onu alt listelere ayırmak istiyoruz.
+Normal bir `group` yapsaydık, sadece eşit bitişik değerleri bir araya getirirdi. Ama istediğimiz, onları olumsuz olup olmadıklarına göre gruplamaktır.
+`groupBy` burada devreye girer! *By* fonksiyonlarına sağlanan eşitlik fonksiyona, aynı türden iki öğeyi almalı ve standartlarına göre eşit kabul ederse `True` döndürmelidir.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> let values = [-4.3, -2.4, -1.2, 0.4, 2.3, 5.9, 10.5, 29.1, 5.3, -2.4, -14.5, 2.9, 2.3]  
+ghci> groupBy (\x y -> (x > 0) == (y > 0)) values  
+[[-4.3,-2.4,-1.2],[0.4,2.3,5.9,10.5,29.1,5.3],[-2.4,-14.5],[2.9,2.3]] 
+~~~~
+
+Buradan hangi bölümlerin olumlu hangilerinin olumsuz olduğunu açıkça görüyoruz. 
+Sağlanan eşitlik fonksiyona iki öğe alır ve ardından yalnızca ikisi de negatifse veya her ikisi de pozitifse True döndürür.
+Bu eşitlik fonksiyona `\x y -> (x > 0) && (y > 0) || (x <= 0) && (y <= 0)` olarak da yazılabilir, ancak bence birinci yol daha okunabilir.
+By fonksiyonları için eşitlik fonksiyonları yazmanın daha net bir yolu, `Data.Function`'dan `on` fonksiyonunu içe aktarmanızdır. `on` şu şekilde tanımlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
+f `on` g = \x y -> f (g x) (g y)  
 ~~~~
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+~~~~ {.haskell: .ghci name="code"}
+on :: (b -> b -> c) -> (a -> b) -> a -> a -> c  
+f `on` g = \x y -> f (g x) (g y)  
+~~~~
 
 
 

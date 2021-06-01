@@ -1417,6 +1417,7 @@ ghci> yesnoIf Nothing "YEAH!" "NO!"
 Functor tür sınıfı
 ------------------
 
+![functor](../img/functor.png)
 Şimdiye kadar, standart library'de birçok tür sınıfıyla karşılaştık. `Ord` ile düzenlenebilir şeyler için oynadık. Eşitlenebilecek şeyler için olan `Eq` ile etrafı karıştırdık.
 Değerleri string'ler olarak görüntülenebilen türler için bir arabirim sunan `Show`'u gördük. Bir string'i bir türden bir değere dönüştürmemiz gerektiğinde,
 iyi arkadaşımız `Read` oradadır. Ve şimdi, temelde haritası çıkarılabilen şeyler için olan `Functor` tür sınıfına bir göz atacağız.
@@ -1565,6 +1566,7 @@ Sonraki bölümlerden birinde functor yasalarını daha ayrıntılı olarak ince
 Türler ve bazı türler
 ---------------------
 
+![typefoo](../img/typefoo.png)
 Type constructor'ları, sonunda somut türler üretmek için diğer türleri parametre olarak alır. 
 Bu tür bana, değerleri üretmek için değerleri parametre olarak alan fonksiyonları hatırlatıyor. Tıpkı fonksiyonların yapabildiği gibi,
 type constructor'larının kısmen uygulanabildiğini gördük (`Either String`, bir tür alan ve `Either String Int` gibi somut bir tür üreten bir türdür).

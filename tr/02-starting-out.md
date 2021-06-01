@@ -458,7 +458,7 @@ ghci> 10 `elem` [3,4,5,6]
 False  
 ~~~~
 
-Bunlar, listeler üzerinde çalışan birkaç temel fonksiyondu. Daha sonra daha fazla liste fonksiyonuna göz atacağız.
+Bunlar, listeler üzerinde çalışan birkaç temel fonksiyondu. Daha sonra daha fazla [liste fonksiyonuna](../tr/07-modules.md) göz atacağız.
 
 Teksas aralıkları
 -----------------

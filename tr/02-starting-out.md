@@ -534,6 +534,7 @@ Bir listede aynı öğeden birkaç tane istiyorsanız, `replicate` fonksiyonunu 
 Ben bir liste anlayışıyım(list comprehension)
 ---------------------------------------------
 
+![kermit](../img/kermit.png)
 Eğer daha önce matematik dersi aldıysanız, muhtemelen belirli anlayışlarla karşılaşırsınız. Normalde genel kümelerden daha spesifik kümeler oluşturmak için kullanılırlar.
 İlk on çift doğal sayıyı içeren bir küme için temel bir anlayış ![setnotation](../img/setnotation.png)'dır. Pipe'dan önceki kısım çıktı fonksiyonu olarak adlandırılır,
 `x` değişkendir, `N` giriş kümesidir ve `x <= 10` predicate'dir. Bu, kümenin predicate'ini karşılayan tüm doğal sayıların iki katını içerdiği anlamına gelir.

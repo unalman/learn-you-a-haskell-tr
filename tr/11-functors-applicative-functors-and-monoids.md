@@ -1020,94 +1020,952 @@ her birinin anlambiliminden yararlanmak için normal fonksiyonları kullanabilir
 newtype keyword'ü
 -------------------
 
-~~~~ {.haskell: .ghci name="code"}
+![maoi](../img/maoi.png)
+Şimdiye kadar, **data** keyword'ü kullanarak kendi cebirsel veri türlerinizi nasıl oluşturacağınızı öğrendik.
+Ayrıca, mevcut türlere **type** keyword'ü ile nasıl synonyms vereceğimizi de öğrendik. Bu bölümde, **newtype** keyword'ünü kullanarak mevcut veri türlerinden
+nasıl yeni türler oluşturabileceğimize ve ilk etapta bunu neden yapmak istediğimize bir göz atacağız.
 
+Önceki bölümde, liste türünün applicative functor olmasının aslında daha fazla yolu olduğunu gördük.
+Bunun bir yolu, `<*>` listedeki her fonksiyonu, yani sol parametresini çıkarmak ve bunu sağdaki listedeki her değere uygulamaktır;
+bu, soldaki listenin tüm değerlerinin sağdaki listeyle olası her kombinasyonuyla sonuçlanır. 
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> [(+1),(*100),(*5)] <*> [1,2,3]  
+[2,3,4,100,200,300,5,10,15] 
 ~~~~
 
-~~~~ {.haskell: .ghci name="code"}
+İkinci yol, `<*>`'ın sol tarafındaki ilk fonksiyonu alıp sağdaki ilk değere uygulamaktır,
+ardından soldaki listeden ikinci fonksiyonu alıp sağdaki ikinci değere uygulayın ve bu şekilde devam edin. Sonuçta, iki listeyi bir araya getirmek gibi bir şey.
+Ancak listeler zaten `Applicative`'in bir instance'ıdır, öyleyse listeleri nasıl bu ikinci yolla Applicative instance'ı yaptık?
+Hatırlarsanız, `ZipList a`'nın bu nedenle öğretildiğini söylemiştik, tek bir value constructor'u olan `ZipList`, sadece bir alana sahip. Bu alana sardığımız listeyi koyarız.
+Ardından `ZipList`, `Applicative`'in bir instance'ı haline getirildi, böylece listeleri zipleme tarzında applicative olarak kullanmak istediğimizde onları `ZipList` yapıcısı ile sarmalıyoruz ve işimiz bittiğinde onları getZipList ile açıyoruz:
+Daha sonra, `ZipList` bir `Applicative` instance'ı haline getirildi, böylece listeleri sıkıştırmada applicative'ler olarak kullanmak istediğimizde,
+onları `ZipList` constructor'u ile sarıyoruz ve işimiz bittiğinde onları `getZipList` ile açıyoruz:
 
+~~~~ {.haskell: .ghci name="code"}
+ghci> getZipList $ ZipList [(+1),(*100),(*5)] <*> ZipList [1,2,3]  
+[2,200,15]  
 ~~~~
 
-~~~~ {.haskell: .ghci name="code"}
+Peki bunun bu newtype keyword'yle ne ilgisi var? `ZipList a` türü için data declaration'ı nasıl yazabileceğimizi düşünün. Bunun bir yolu, bunu böyle yapmaktır:
 
+~~~~ {.haskell: .ghci name="code"}
+data ZipList a = ZipList [a]  
+~~~~
+
+Yalnızca bir value contructor'una sahip olan ve bu value contructor'ın, bir şeylerin listesi olan tek bir alanı vardır.
+`ZipList`'ten bir listeyi otomatik olarak çıkaran bir fonksiyonu otomatik olarak elde etmek için record sözdizimini kullanmak isteyebiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+data ZipList a = ZipList { getZipList :: [a] }  
+~~~~
+
+Bu iyi görünüyor ve aslında oldukça iyi çalışıyor. Mevcut bir türü bir tür sınıfının instance'ı yapmak için iki yolumuz vardı,
+bu nedenle *data* keyword'ünü bu türü başka bir türe sarmak için kullandık ve diğer türü ikinci şekilde instance yaptık.
+
+Haskell'deki *newtype* keyword'ü, sadece bir türü alıp başka bir tür olarak sunmak için bir şeye sarmak istediğimizde tam olarak bu durumlar için yapılır.
+Güncel kütüphanelerde `ZipList a` şu şekilde tanımlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype ZipList a = ZipList { getZipList :: [a] }  
+~~~~
+
+*data* keyword'ü yerine *newtype* keyword'ü kullanılır. Şimdi neden bu? Birincisi, *newtype* daha hızlıdır. Bir türü sarmak için *data* keyword'ünü kullanırsanız,
+programınız çalışırken tüm bu sarmalama ve açma işlemlerinin bazı ek yükleri vardır. Ancak *newtype*'ı kullanırsanız,
+Haskell bunu sadece mevcut bir türü yeni bir türe (dolayısıyla adı) sarmak için kullandığınızı bilir, çünkü dahili olarak aynı olmasını ama
+farklı bir türe sahip olmasını istersiniz. Bunu akılda tutarak Haskell, hangi değerin hangi türden olduğunu çözdükten sonra paketlemeden kurtulabilir.
+
+Öyleyse neden her zaman *data* yerine *newtype kullanmıyoruz? *newtype* keyword'ünü kullanarak mevcut bir türden yeni bir tür oluşturduğunuzda,
+yalnızca bir value constructor'a sahip olabilirsiniz ve bu value constructor yalnızca bir alana sahip olabilir.
+Ancak *data*'yla, birkaç value constructor'a sahip veri türleri yapabilirsiniz ve her constructor sıfır veya daha fazla alana sahip olabilir:
+
+~~~~ {.haskell: .ghci name="code"}
+data Profession = Fighter | Archer | Accountant  
+  
+data Race = Human | Elf | Orc | Goblin  
+  
+data PlayerCharacter = PlayerCharacter Race Profession  
+~~~~
+
+*newtype* kullanırken, tek alanlı tek bir constructor ile sınırlandırılırsınız.
+
+Ayrıca *data* ile yapacağımız gibi *newtype* ile *deriving* keyword'ünü de kullanabiliriz. `Eq`, `Ord`, `Enum`, `Bounded`, `Show` ve `Read` için instance'lar türetebiliriz.
+Bir tür sınıfı için instance türetirsek, sarmaladığımız tür, başlamak için bu tür sınıfında olmalıdır. Bu mantıklı, çünkü *newtype* mevcut bir türü sarıyor.
+Şimdi şunu yaparsak, yeni türümüzün değerlerini yazdırabilir ve eşitleyebiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype CharList = CharList { getCharList :: [Char] } deriving (Eq, Show)  
+~~~~
+
+Şuna bir bakalım:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> CharList "this will be shown!"  
+CharList {getCharList = "this will be shown!"}  
+ghci> CharList "benny" == CharList "benny"  
+True  
+ghci> CharList "benny" == CharList "oisters"  
+False  
+~~~~
+
+Bu özellikle *newtype* da, value constructor'u aşağıdaki türe sahiptir:
+
+~~~~ {.haskell: .ghci name="code"}
+CharList :: [Char] -> CharList  
+~~~~
+
+`"my sharona"` gibi bir `[Char]` değeri alır ve bir `CharList` değeri döndürür. `CharList` value constructor'unu kullandığımız yukarıdaki örneklerden,
+durumun gerçekten böyle olduğunu görüyoruz. Tersine, yeni türümüzde *record* sözdizimi kullandığımız için bizim için oluşturulan `getCharList` fonksiyonu şu türe sahiptir:
+
+~~~~ {.haskell: .ghci name="code"}
+getCharList :: CharList -> [Char]  
+~~~~
+
+Bir CharList değerini alır ve bunu [Char] değerine dönüştürür. Bunu sarma ve açma olarak düşünebilirsiniz,
+ancak aynı zamanda değerleri bir türden diğerine dönüştürmek olarak da düşünebilirsiniz.
+
+
+Tür sıfını instance'ları yapmak için newtype kullanma
+------------------------------------------------------
+
+Çoğu zaman, türlerimizi belirli type class'larının instance'ları yapmak isteriz, ancak tür parametreleri yapmak istediğimiz şeyle eşleşmez.
+`Maybe`'yi bir `Functor` instance'ı yapmak kolaydır, çünkü `Functor` tür sınıfı şu şekilde tanımlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+class Functor f where  
+    fmap :: (a -> b) -> f a -> f b  
+~~~~
+
+Yani şununla başlıyoruz:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Functor Maybe where 
+~~~~
+
+Ve sonra `fmap`'i uygulayın. Tüm tür parametreleri toplanır çünkü `Maybe`, `Functor` tür sınıfının tanımında `f`'nin yerini alır ve
+bu nedenle `fmap`'e yalnızca `Maybe` üzerinde çalışmış gibi bakarsak, şu şekilde davranır:
+
+~~~~ {.haskell: .ghci name="code"}
+fmap :: (a -> b) -> Maybe a -> Maybe b  
+~~~~
+
+![krakatoa](../img/krakatoa.png)
+Bu sadece şeftali gibi değil mi? Şimdi, demeti, bir fonksiyonu bir demet üzerinde `fmap` ettiğimizde, 
+demetin ilk bileşenine uygulanacak şekilde bir `Functor` instance'ı yapmak istersek ne olur? Bu şekilde, `fmap (+3) (1,1)` yapmak `(4,1)` ile sonuçlanır.
+Bunun instance'ını yazmanın biraz zor olduğu ortaya çıktı. `Maybe` ile, sadece `instance Functor Maybe` diyoruz,
+çünkü yalnızca tam olarak bir parametre alan type constructor'ları `Functor`'un bir instance'ı yapılabilir.
+Ancak `(a, b)` ile böyle bir şey yapmanın bir yolu yok gibi görünüyor, böylece `a` türü parametresi `fmap` kullandığımızda değişen bir parametre haline gelir.
+Bunu aşmak için, demetimizi, ikinci tür parametresi, demetteki ilk bileşenin türünü temsil edecek şekilde *newtype* yapabiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype Pair b a = Pair { getPair :: (a,b) }  
+~~~~
+
+Ve şimdi, onu bir `Functor` instance'ı yapabiliriz, böylece fonksiyon ilk bileşen üzerine eşlenir:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Functor (Pair c) where  
+    fmap f (Pair (x,y)) = Pair (f x, y)  
+~~~~
+
+Gördüğünüz gibi, *newtype* ile tanımlanan türler üzerinde desen eşleştirme yapabiliriz. Esas demeti elde etmek için desen eşleştirme yaparız, 
+sonra `f` fonksiyonunu demetteki ilk bileşene uygularız ve ardından demeti `Pair b a`'ya dönüştürmek için `Pair` value constructor'unu kullanırız.
+Yalnızca yeni çiftlerimizde çalışsaydı `fmap` türünün ne olacağını hayal edersek, şöyle olurdu:
+
+~~~~ {.haskell: .ghci name="code"}
+fmap :: (a -> b) -> Pair c a -> Pair c b  
+~~~~
+
+Yine, `instance Functor (Pair c) where` dedik ve bu nedenle `Pair c`, `Functor` için tür sınıfı tanımında `f`'nin yerini aldı:
+
+~~~~ {.haskell: .ghci name="code"}
+class Functor f where  
+    fmap :: (a -> b) -> f a -> f b  
+~~~~
+
+Şimdi, bir demeti `Pair b a`'ya çevirirsek, onun üzerinde `fmap` kullanabiliriz ve fonksiyon ilk bileşenin üzerine eşlenir:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getPair $ fmap (*100) (Pair (2,3))  
+(200,3)  
+ghci> getPair $ fmap reverse (Pair ("london calling", 3))  
+("gnillac nodnol",3)  
+~~~~
+
+newtype laziness üzerine
+------------------------
+
+*newtype*'ın genellikle verilerden daha hızlı olduğundan bahsetmiştik. *newtype* ile yapılabilecek tek şey, mevcut bir türü yeni bir türe dönüştürmektir,
+Haskell, tıpkı orijinal olanlar gibi *newtype* ile tanımlanan türlerin değerlerini temsil edebilir,
+yalnızca, türlerinin artık farklı olduğunu akılda tutması gerekir. Bu olgu, sadece *newtype*'ın daha hızlı olmadığı, aynı zamanda daha tembel(lazier) olduğu anlamına gelir.
+Bunun ne anlama geldiğine bir bakalım.
+
+Daha önce de söylediğimiz gibi, Haskell varsayılan olarak tembeldir, bu da sadece fonksiyonlarımızın sonuçlarını gerçekten yazdırmaya çalıştığımızda
+herhangi bir hesaplama yapılacağı anlamına gelir. Dahası, yalnızca fonksiyonumuzun sonucu bize bildirmesi için gerekli olan hesaplamalar gerçekleştirilecektir.
+Haskell'deki `undefined` değer, hatalı bir hesaplamayı temsil eder. Bunu terminale yazdırarak değerlendirmeye çalışırsak (yani Haskell'i gerçekten hesaplamaya zorlarsak),
+Haskell beğenmediğini belirten bir kriz atacak (teknik olarak bir istisna olarak adlandırılır):
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> undefined  
+*** Exception: Prelude.undefined  
+~~~~
+
+Ancak, içinde `undefined` değerler olan bir liste yaparsak, ancak `undefined` olmayan sadece listenin başını istersek, her şey yolunda gider çünkü
+sadece ilk öğenin ne olduğunu görmek istiyorsak, Haskell'in listedeki diğer öğeleri gerçekten değerlendirmesine gerek yoktur:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> head [3,4,5,undefined,2,undefined]  
+3  
+~~~~
+
+Şimdi şu türü düşünün:
+
+~~~~ {.haskell: .ghci name="code"}
+data CoolBool = CoolBool { getCoolBool :: Bool }  
+~~~~
+
+*data* keyword'ü ile tanımlanan, run-of-the-mill cebirsel veri türünüzdür. `Bool` türünde bir alana sahip tek bir value constructor'a sahiptir.
+`CoolBool`'daki `Bool`'un `True` veya `False` olmasına bakılmaksızın, bir `CoolBool` ile eşleşen ve `"hello"` değerini döndüren bir fonksiyon yapalım:
+
+~~~~ {.haskell: .ghci name="code"}
+helloMe :: CoolBool -> String  
+helloMe (CoolBool _) = "hello"  
+~~~~
+
+Bu fonksiyonu normal bir `CoolBool`'a uygulamak yerine, ona bir curveball atalım ve `undefined` uygulayalım!
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> helloMe undefined  
+"*** Exception: Prelude.undefined  
+~~~~
+
+Eyvah! Bir istisna! Şimdi bu istisna neden oldu? *data* keyword'ü ile tanımlanan türler birden çok value constructor'a sahip olabilir
+(`CoolBool`'da yalnızca bir tane olmasına rağmen). Dolayısıyla, fonksiyonumuza verilen değerin `(CoolBool _)` modeline uyup uymadığını görmek için
+Haskell, değeri ürettiğimizde hangi value constructor'un kullanıldığını görebilecek kadar değeri değerlendirmelidir.
+Ve `undefined` bir değeri değerlendirmeye çalıştığımızda, biraz bile olsa, bir istisna(exception) atılır.
+
+`CoolBool` için *data* keyword'ü kullanmak yerine, *newtype* kullanmayı deneyelim:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype CoolBool = CoolBool { getCoolBool :: Bool }  
+~~~~
+
+`helloMe` fonksiyonumuzu değiştirmemize gerek yok, çünkü türünüzü tanımlamak için *newtype* veya *data* kullanırsanız desen eşleştirmenin sözdizimi aynıdır.
+Burada da aynı şeyi yapalım ve `helloMe`'yi `undefined` bir değere uygulayalım:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> helloMe undefined  
+"hello"  
+~~~~
+
+![shamrock](../img/shamrock.png)
+İşe yaradı! Hmmm, neden böyle? Söylediğimiz gibi, newtype kullandığımızda Haskell, yeni türün değerlerini, orijinal değerlerle aynı şekilde dahili olarak temsil edebilir.
+Çevresine başka bir kutu eklemek zorunda değil, sadece değerlerin farklı türlerde olduğunun farkında olması gerekiyor.
+Haskell, newtype keyword'ü ile yapılan türlerin yalnızca bir constructor'a sahip olabileceğini bildiğinden, (`CoolBool _`) modeline uyduğundan emin olmak için
+fonksiyona iletilen değeri değerlendirmek zorunda değildir, çünkü newtype türleri yalnızca bir olası value constructor'a ve bir alana sahip olabilir!
+
+Davranıştaki bu farklılık önemsiz görünebilir, ancak aslında oldukça önemlidir çünkü *data* ve *newtype* ile tanımlanan türlerin programcının bakış açısından
+benzer şekilde davrandıklarını düşünülebilir, çünkü her ikisinin de value constructor'ları ve alanları olduğu için, aslında iki farklı mekanizmadır.
+*data*, kendi türlerinizi sıfırdan oluşturmak için kullanılabilirken, newtype, mevcut bir türden tamamen yeni bir tür oluşturmak içindir.
+*newtype* değerlerde desen eşleştirme, bir kutudan bir şey çıkarmak gibi değildir (*data* ile olduğu gibi), daha çok bir türden diğerine doğrudan dönüşüm yapmakla ilgilidir.
+
+
+type vs. newtype vs. data
+--------------------------
+
+Bu noktada, tür, *data* ve *newtype* arasındaki farkın tam olarak ne olduğu konusunda biraz kafanız karışabilir, bu yüzden hafızamızı biraz yenileyelim.
+
+**type** keyword'ü, tür eşlanlamlıları yapmak içindir. Bunun anlamı, zaten var olan bir türe başka bir ad vermemizdir, böylece türe atıfta bulunmak daha kolay olur.
+Aşağıdakileri yaptığımızı varsayalım:
+
+~~~~ {.haskell: .ghci name="code"}
+type IntList = [Int]  
+~~~~
+
+Bütün bunlar, `[Int]` türüne `IntList` olarak başvurmamıza izin vermektir. Birbirlerinin yerine kullanılabilirler.
+Bir `IntList` value constructor veya buna benzer bir şey elde etmiyoruz. `[Int]` ve `IntList` aynı türe başvurmanın yalnızca iki yolu olduğundan,
+tür ek açıklamalarında hangi adı kullandığımız önemli değildir:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> ([1,2,3] :: IntList) ++ ([1,2,3] :: [Int])  
+[1,2,3,1,2,3]  
+~~~~
+
+Tür imzalarımızı daha açıklayıcı hale getirmek istediğimizde, türlere, kullanıldıkları fonksiyonlar bağlamında bize amaçları hakkında
+bir şeyler söyleyen adlar vererek tür eşlanlamlılarını kullanırız. Örneğin, bir telefon rehberini temsil etmek için `[(String, String)]` türünde bir ilişkilendirme listesi
+kullandığımızda, fonksiyonlarımızın tür imzalarının daha kolay okunması için ona `PhoneBook`'un tür eşlanlamlısını verdik.
+
+**newtype** keyword'ü, mevcut türleri alıp yeni türlere sarmak içindir, böylece çoğunlukla onları belirli tür sınıflarının instance'ları haline getirmeyi kolaylaştırır.
+Mevcut bir türü sarmak için *newtype* kullandığımızda, aldığımız tür orijinal türden ayrıdır. Aşağıdaki *newtype* değerini yaparsak:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype CharList = CharList { getCharList :: [Char] }  
+~~~~
+
+Bir `CharList`'i ve `[Char]` türünün bir listesini bir araya getirmek için `++` kullanamayız. İki `CharList`'i bir araya getirmek için bile `++` kullanamayız,
+çünkü `++` yalnızca listelerde çalışır ve `CharList` türü bir liste içerdiği söylense bile bir liste değildir.
+Bununla birlikte, iki `CharList`'i `++` listelerine dönüştürebilir ve sonra bunu bir `CharList`'e dönüştürebiliriz.
+
+Yeni tür bildirimlerimizde record sözdizimi kullandığımızda, yeni tür ile orijinal tür arasında dönüştürme yapmak için fonksiyonlar elde ederiz:
+yani newtype value constructor'u ve alanındaki değeri çıkarma fonksiyonu. Yeni tür ayrıca, orijinal türün ait olduğu tür sınıflarının bir instance'ı otomatik olarak
+oluşturmaz, bu nedenle bunları türetmemiz veya manuel olarak yazmamız gerekir.
+
+Pratikte, yeni tür bildirimlerini yalnızca bir constructor ve bir alana sahip olabilen data declaration'ları olarak düşünebilirsiniz.
+Kendinizi böyle bir data declaration'ı yazarken yakalarsanız, newtype kullanmayı düşünün.
+
+**data** keyword'ü, kendi veri türlerinizi oluşturmak içindir ve onlarla birlikte, çılgınca davranabilirsiniz.
+İstediğiniz kadar constructor ve alana sahip olabilirler ve herhangi bir cebirsel veri türünü kendiniz uygulamak için kullanılabilirler.
+Listelerden Maybe benzeri türlerden ağaçlara kadar her şey.
+
+Yalnızca tür imzalarınızın daha temiz görünmesini ve daha açıklayıcı olmasını istiyorsanız, muhtemelen tür eşanlamlıları istersiniz.
+Mevcut bir türü alıp, onu bir tür sınıfının instance'ı haline getirmek için yeni bir türe sarmak istiyorsanız, muhtemelen bir newtype arıyorsunuzdur.
+Ve tamamen yeni bir şey yapmak istiyorsanız, data keyword'ünü aramanızın olasılığı yüksektir.
+
+
+Monoid'ler
+---------
+
+![pirateship](../img/pirateship.png)
+Haskell'deki tür sınıfları, bazı ortak davranışlara sahip türler için bir interface sunmak için kullanılır.
+Değerleri eşitlenebilen türler için olan `Eq` ve sıraya konulabilen `Ord` gibi basit tür sınıflarıyla başladık ve
+daha sonra `Functor` ve `Applicative` gibi daha ilginç olanlara geçtik.
+
+Bir tür oluşturduğumuzda, hangi davranışları desteklediğini, yani neye benzeyebileceğini düşünürüz ve 
+sonra buna dayanarak hangi tür sınıflarının onu bir instance'ı yapacağına karar veririz.
+Türümüzün değerlerinin eşitlenmesi mantıklıysa, onu `Eq` tür sınıfının bir instance'ını yaparız. 
+Türünüzün bir çeşit functor olduğunu görürsek, onu bir `Functor` instance'ı yaparız ve bu böyle devam eder.
+
+Şimdi şunu düşünün: `*` iki sayıyı alıp onları çarpan bir fonksiyondur. Bir sayıyı `1` ile çarparsak, sonuç her zaman bu sayıya eşittir.
+`1 * x` veya `x * 1` yapmamızın bir önemi yok, sonuç her zaman `x`'tir. Benzer şekilde, `++` da iki şeyi alan ve üçüncüyü döndüren bir fonksiyondur.
+Yalnızca sayıları çoğaltmak yerine iki liste alır ve bunları birleştirir. Ve `*` gibi, aynı zamanda, `++` ile kullanıldığında diğerini değiştirmeyen belirli bir değere sahiptir. Bu değer boş listedir: `[]`.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> 4 * 1  
+4  
+ghci> 1 * 9  
+9  
+ghci> [1,2,3] ++ []  
+[1,2,3]  
+ghci> [] ++ [0.5, 2.5]  
+[0.5,2.5]  
+~~~~
+
+`1` ile birlikte `*` ve `[]` ile birlikte `++` bazı ortak özellikleri paylaşıyor gibi görünüyor:
+
+- Fonksiyon iki parametre alır.
+- Parametreler ve döndürülen değer aynı türe sahiptir.
+- İkili fonksiyonla birlikte kullanıldığında diğer değerleri değiştirmeyen böyle bir değer vardır.
+
+Bu iki operasyonun ortak bir yönü daha var ki bu önceki gözlemlerimiz kadar açık olmayabilir: üç veya daha fazla değere sahip olduğumuzda ve
+bunları tek bir sonuca indirgemek için ikili fonksiyon kullanmak istediğimizde, ikili fonksiyonu değerlere uygulama sıramız önemli değildir.
+`(3 * 4) * 5` veya `3 * (4 * 5)` yapmamız önemli değil. Her iki durumda da sonuç `60`'tır. Aynısı `++` için de geçerlidir:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> (3 * 2) * (8 * 5)  
+240  
+ghci> 3 * (2 * (8 * 5))  
+240  
+ghci> "la" ++ ("di" ++ "da")  
+"ladida"  
+ghci> ("la" ++ "di") ++ "da"  
+"ladida"  
+~~~~
+
+Bu özelliğe birliktelik(associativity) diyoruz. `*` ilişkiseldir ve `++` da aynıdır, ancak örneğin `-` değildir. `(5 - 3) - 4 ve 5 - (3 - 4)` ifadeleri farklı sayılarla sonuçlanır.
+
+Bu özellikleri fark edip yazarak, monoid'lere rastladık! Bir monoid, ilişkisel bir ikili fonksiyona ve
+bu fonksiyonlara göre bir özdeşlik olarak hareket eden bir değere sahip olduğunuz zamandır. Bir şey, bir fonksiyona göre bir özdeşlik olarak hareket ettiğinde,
+bu, o fonksiyonla ve başka bir değerle çağrıldığında, sonucun her zaman diğer değere eşit olduğu anlamına gelir. 
+`1 *` ile ilgili özdeştir ve `[]` `++` ile ilgili özdeştir. Haskell dünyasında bulunabilecek birçok başka monoid var, bu yüzden Monoid tür sınıfı var.
+`Monoid` gibi davranabilen türler içindir. Tür sınıfıının nasıl tanımlandığını görelim:
+
+~~~~ {.haskell: .ghci name="code"}
+class Monoid m where  
+    mempty :: m  
+    mappend :: m -> m -> m  
+    mconcat :: [m] -> m  
+    mconcat = foldr mappend mempty  
+~~~~
+
+`Monoid` tür sınıfı `import Data.Monoid` bölümünde tanımlanmıştır. Biraz zaman ayıralım ve onunla iyice tanışalım. 
+
+Her şeyden önce, yalnızca somut türlerin `Monoid`'in instance'larını oluşturulabileceğini görüyoruz, çünkü tür sınıfı tanımındaki `m`, herhangi bir tür parametresi almıyor.
+Bu, instance'larının bir parametre alan type constructor'ları olmasını gerektiren `Functor` ve `Applicative`'den farklıdır.
+
+İlk fonksiyon `mempty`'dir. Parametre almadığı için gerçekte bir fonksiyon değildir, bu yüzden bu polimorfik bir sabittir, `Bounded`'dan `minBound`'a benzer.
+`mempty`, belirli bir monoid için özdeşlik değerini temsil eder.
+
+Sırada, muhtemelen tahmin ettiğiniz gibi ikili fonksiyon olan `mappend` var. Aynı türde iki değer alır ve bu türden bir değer de döndürür.
+`mappend` olarak adlandırılma kararının bir tür talihsizlik olduğunu belirtmekte fayda var, çünkü bu, bir şekilde iki şeyi eklediğimizi ima ediyor.
+`++` iki listeyi alıp birini diğerine eklerken, `*` gerçekten herhangi bir ekleme yapmaz, sadece iki sayıyı bir araya getirir.
+`Monoid`'in diğer instance'larıyla karşılaştığımızda, bunların çoğunun da değer eklemediğini göreceğiz, bu nedenle ekleme açısından düşünmekten kaçının ve
+`mappend`'in iki monoid değer alıp üçüncü bir değer döndüren ikili bir fonksiyon olduğunu düşünün.
+
+Bu tür sınıfı tanımındaki son fonksiyon `mconcat`'tir. Monoid değerlerin bir listesini alır ve listenin öğeleri arasında mappend yaparak bunları tek bir değere düşürür.
+`mempty`'yi başlangıç değeri olarak alan ve listeyi sağdan `mappend` ile fold'layan varsayılan bir uygulaması vardır.
+Varsayılan uygulama çoğu durumda iyi olduğundan, bundan sonra `mconcat` ile çok fazla ilgilenmeyeceğiz.
+Bir türü `Monoid`'in bir instance'ı haline getirirken, sadece `mempty` ve `mappend` uygulamak yeterlidir.
+`mconcat`'in orada olmasının nedeni, bazı instance'lar için `mconcat`'i uygulamanın daha verimli bir yolu olabilir, ancak çoğu durumda varsayılan uygulama gayet iyi.
+
+`Monoid`'in belirli instance'larına geçmeden önce, monoid yasalarına kısaca bir göz atalım. İkili fonksiyona göre özdeşlik görevi gören bir değerin olması ve 
+ikili fonksiyonun ilişkisel olması gerektiğinden bahsetmiştik. Bu kurallara uymayan `Monoid` instance'ları oluşturmak mümkündür, 
+ancak bu tür instance'lar kimsenin işine yaramaz çünkü `Monoid` tür sınıfını kullanırken, monoid gibi davranan instance'lara güveniriz. Aksi takdirde, ne anlamı var?
+Bu nedenle, instance'lar oluştururken aşağıdaki yasalara uyduklarından emin olmalıyız:
+
+- ``mempty `mappend` x = x``
+- ``x `mappend` mempty = x``
+- ``(x `mappend` y) `mappend` z = x `mappend` (y `mappend` z)``
+
+İlk ikisi `mempty`'nin `mappend`'e göre özdeş olarak hareket etmesi gerektiğini belirtir ve üçüncüsü, `mappend`'in ilişkisel olması gerektiğini,
+yani birkaç monoid değeri bire indirgemek için `mappend`'i kullandığımız sıranın önemli olmadığını söyler.
+Haskell bu yasaları uygulamaz, bu nedenle programcı olarak biz instance'larımızın gerçekten onlara uyması konusunda dikkatli olmalıyız
+
+
+Listeler monoid'lerdir
+-----------------------
+
+Evet, listeler monoiddir! Gördüğümüz gibi, `++` fonksiyonu ve boş `[]` listesi bir monoid oluşturur. instance çok basittir:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Monoid [a] where  
+    mempty = []  
+    mappend = (++)  
+~~~~
+
+Listeler, tuttukları öğelerin türüne bakılmaksızın `Monoid` tür sınıfının bir instance'ıdır. `Monoid` bir instance için somut bir tür gerektirdiğinden,
+`instance Monoid []` yazmadığımıza, `instance Monoid [a]` yazdığımıza dikkat edin.
+
+Bunu bir test çalıştırması yaptığımızda hiçbir sürprizle karşılaşmayız:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> [1,2,3] `mappend` [4,5,6]  
+[1,2,3,4,5,6]  
+ghci> ("one" `mappend` "two") `mappend` "tree"  
+"onetwotree"  
+ghci> "one" `mappend` ("two" `mappend` "tree")  
+"onetwotree"  
+ghci> "one" `mappend` "two" `mappend` "tree"  
+"onetwotree"  
+ghci> "pang" `mappend` mempty  
+"pang"  
+ghci> mconcat [[1,2],[3,6],[9]]  
+[1,2,3,6,9]  
+ghci> mempty :: [a]  
+[]  
+~~~~
+
+![smug](../img/smug.png)
+Son satırda, açık bir tür ek açıklaması yazmamız gerektiğine dikkat edin, çünkü eğer `mempty` yaparsak, GHCi hangi instance'ı kullanacağını bilemezdi,
+bu yüzden liste instance'ını istediğimizi söylemeliydik. `[a]` genel türünü (`[Int]` veya `[String]` belirtmenin aksine) kullanabildik çünkü
+boş liste herhangi bir tür içeriyormuş gibi davranabilir.
+
+`mconcat`'in varsayılan bir uygulaması olduğu için, bir şeyi `Monoid`'in bir instance'ını yaptığımızda ücretsiz olarak elde ederiz.
+Listede `mconcat`'in sadece `concat` olduğu ortaya çıkıyor. Listelerin bir listesini alır ve düzleştirir, çünkü bu, 
+bir listedeki tüm bitişik listeler arasında `++` yapmaya eşdeğerdir.
+
+Tek biçimli yasalar gerçekten liste durumu için geçerlidir. Birkaç listeye sahip olduğumuzda ve onları birlikte `mappend` (veya `++`),
+hangisini önce yaptığımız önemli değildir, çünkü bunlar zaten uçlarda birleştirilmiştir. Ayrıca, boş liste özdeş görevi görür, bu nedenle her şey yolunda.
+Monoidlerin ``a `mappend` b``'nin ``b `mappend` a``'ya eşit olmasını gerektirmediğine dikkat edin. Liste durumunda, bunlar açıkça:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> "one" `mappend` "two"  
+"onetwo"  
+ghci> "two" `mappend` "one"  
+"twoone"  
+~~~~
+
+Ve sorun değil. `3 * 5` ve `5 * 3` çarpımları için aynı olması sadece çarpma özelliğidir, ancak tüm (ve aslında çoğu) monoid için geçerli değildir.
+
+
+Product ve Sum
+--------------
+
+Sayıların monoid olarak kabul edilmesi için bir yolu daha önce inceledik. Sadece ikili fonksiyon `*` ve özdeş değeri `1` olsun.
+Sayıların monoid olmasının tek yolunun bu olmadığı ortaya çıktı. Diğer bir yol ise ikili fonksiyonun `+` ve özdeş değerinin `0` olmasıdır:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> 0 + 4  
+4  
+ghci> 5 + 0  
+5  
+ghci> (1 + 3) + 5  
+9  
+ghci> 1 + (3 + 5)  
+9  
+~~~~
+
+monoid yasalar geçerlidir, çünkü herhangi bir sayıya 0 eklerseniz, sonuç o sayıdır. Ekleme de ilişkiseldir, bu yüzden orada sorun yaşamıyoruz.
+Şimdi sayıların monoid olmasının eşit derecede geçerli iki yolu olduğuna göre, hangi yolu seçmelisiniz? Eh, mecbur değiliz.
+Unutmayın, bir türün aynı tür sınıfının bir instance'ı olmasının birkaç yolu olduğunda, bu türü bir newtype olarak sarabiliriz ve
+sonra yeni türü farklı bir şekilde tür sınıfının bir instance'ı yapabiliriz. Pastamızı da yiyebiliriz
+
+`Data.Monoid` modülü bunun için `Product` ve `Sum` olmak üzere iki tür verir. `Product` şu şekilde tanımlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype Product a =  Product { getProduct :: a }  
+    deriving (Eq, Ord, Read, Show, Bounded)
+~~~~
+
+Basit, bazı türetilmiş instance'larla birlikte bir tür parametresine sahip bir newtype sarmalayıcı.
+`Monoid` instance'ı biraz şuna benzer:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Num a => Monoid (Product a) where  
+    mempty = Product 1  
+    Product x `mappend` Product y = Product (x * y)  
+~~~~
+
+`mempty`, bir `Product` constructor'una yalnızca `1` sarılmıştır. `Product` constructor'daki `mappend` desen eşleşmeleri, iki sayıyı çarpar ve sonra elde edilen sayıyı geri sarar. Gördüğünüz gibi, bir `Num a` sınıf kısıtlaması var. Bu, `Product a`'nın, zaten `Num`'un bir instance'ı olan tüm `a`'lar için bir `Monoid `instance'ı olduğu anlamına gelir. `Product a`'yı monoid olarak kullanmak için, biraz newtype sarma ve sarılan şeyi açmalıyız:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getProduct $ Product 3 `mappend` Product 9  
+27  
+ghci> getProduct $ Product 3 `mappend` mempty  
+3  
+ghci> getProduct $ Product 3 `mappend` Product 4 `mappend` Product 2  
+24  
+ghci> getProduct . mconcat . map Product $ [3,4,2]  
+24  
+~~~~
+
+Bu, `Monoid` tür sınıfının bir gösterimi olarak güzel, ancak aklı başında hiç kimse, sadece `3 * 9` ve `3 * 1` yazmak yerine sayıları çarpmak için bu yöntemi kullanmaz.
+Ancak biraz sonra, şu anda önemsiz görünebilecek bu `Monoid` instance'larının nasıl işe yarayabileceğini göreceğiz.
+
+`Sum`, `Product` gibi tanımlanır ve instance da benzerdir. Aynı şekilde kullanıyoruz:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getSum $ Sum 2 `mappend` Sum 9  
+11  
+ghci> getSum $ mempty `mappend` Sum 3  
+3  
+ghci> getSum . mconcat . map Sum $ [1,2,3]  
+6  
 ~~~~
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- Any ve All
+-------------
+
+İki farklı ancak eşit derecede geçerli yolla bir monoid gibi hareket edebilen başka bir tür `Bool`'dur.
+İlk yol, *or* fonksiyonuna sahip olmaktır `||` özdeş değeri olarak `False` ile birlikte binary fonksiyon olarak davranır.
+Mantıkta *or*'un çalışma şekli, iki parametresinden herhangi biri `True` ise, `True` döndürür, aksi takdirde `False` döndürür.
+Bu nedenle, özdeş değeri olarak `False` kullanırsak, `False` ile sorulduğunda `False` ve `True` ile belirtildiğinde `True` döndürür.
+`Any` *newtype* constructor'u, bu şekilde bir `Monoid` instance'ıdır. Şöyle tanımlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype Any = Any { getAny :: Bool }  
+    deriving (Eq, Ord, Read, Show, Bounded)  
+~~~~
+
+Instance'ı şöyle görünüyor:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Monoid Any where  
+        mempty = Any False  
+        Any x `mappend` Any y = Any (x || y)  
+~~~~
+
+Bunun `Any` olarak adlandırılmasının nedeni, bu ikisinden herhangi biri `True` ise ``x `mappend` y``'nin `True` olmasıdır. 
+Üç veya daha fazla `Any` sarmalanmış `Bool` birlikte mappend olsa bile, sonuçlardan herhangi biri `True` ise `True` olarak kalacaktır:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getAny $ Any True `mappend` Any False  
+True  
+ghci> getAny $ mempty `mappend` Any True  
+True  
+ghci> getAny . mconcat . map Any $ [False, False, False, True]  
+True  
+ghci> getAny $ mempty `mappend` mempty  
+False  
+~~~~
+
+`Bool`'un bir `Monoid` instance'ı olmasının diğer yolu, tam tersini yapmaktır: `&&`'nin binary fonksiyon olması ve ardından özdeş değerini `True` yapın.
+Mantıksaldır ve yalnızca her iki parametresi de `True` ise `True` döndürür. Bu *newtype* bildirimi, hiç de zevkli değil:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype All = All { getAll :: Bool }  
+        deriving (Eq, Ord, Read, Show, Bounded)  
+~~~~
+
+Ve bu instance:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Monoid All where  
+        mempty = All True  
+        All x `mappend` All y = All (x && y)  
+~~~~
+
+`All` türünün değerlerini `mappend` kullandığımızda, sonuç yalnızca `mappend` işlemlerinde kullanılan tüm değerler `True` ise `True` olacaktır:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getAll $ mempty `mappend` All True  
+True  
+ghci> getAll $ mempty `mappend` All False  
+False  
+ghci> getAll . mconcat . map All $ [True, True, True]  
+True  
+ghci> getAll . mconcat . map All $ [True, True, False]  
+False  
+~~~~
+
+Çarpma ve toplamada olduğu gibi, genellikle ikili fonksiyonları *newtype*'lara sarmak ve ardından `mappend` ve `mempty` kullanmak yerine açıkça belirtiriz.
+`mconcat`, `Any` ve `All` için yararlı görünmektedir, ancak genellikle `Bool` listelerini alan ve bunlardan herhangi biri `True` ise veya
+tümü `True` ise `True` döndüren `or` ve `and` fonksiyonlarını kullanmak daha kolaydır.
+
+
+
+Ordering monoid
+---------------
+
+
+Hey, `Ordering` türünü hatırlıyor musun? Nesneleri karşılaştırırken sonuç olarak kullanılır ve üç değere sahip olabilir:
+`LT`, `EQ` ve `GT`, sırasıyla *less than*, *equal* ve *greater than* anlamına gelir:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> 1 `compare` 2  
+LT  
+ghci> 2 `compare` 2  
+EQ  
+ghci> 3 `compare` 2  
+GT  
+~~~~
+
+Listeler, sayılar ve boole değerleriyle, monoidleri bulmak yalnızca zaten var olan yaygın olarak kullanılan fonksiyonlara bakmak ve
+bir tür monoid davranış sergileyip sergilemediklerini görmekten ibaretti. `Ordering` ile bir monoid'i tanımak için biraz daha dikkatli bakmalıyız, 
+ancak `Monoid` instance'ının şimdiye kadar tanıştıklarımız kadar sezgisel ve oldukça kullanışlı olduğu ortaya çıktı:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Monoid Ordering where  
+    mempty = EQ  
+    LT `mappend` _ = LT  
+    EQ `mappend` y = y  
+    GT `mappend` _ = GT  
+~~~~
+
+instance şu şekilde kurulur: İki `Ordering` değerini `mappend`'liyoruz, soldaki değer `EQ` olmadığı sürece soldaki korunur, bu durumda sağdaki değer sonuçtur.
+Özdeşi `EQ`'dur. İlk başta, bu biraz keyfi görünebilir, ancak aslında kelimeleri alfabetik olarak karşılaştırma şeklimize benziyor.
+İlk iki harfi karşılaştırıyoruz ve eğer farklılarsa, bir sözlükte hangi kelimenin önce geleceğini zaten belirleyebiliriz.
+Bununla birlikte, ilk iki harf eşitse, sonraki harf çiftini karşılaştırmaya geçip işlemi tekrar ederiz.
+
+Örneğin, `"ox"` ve `"on"` kelimelerini alfabetik olarak karşılaştıracak olsaydık, önce her kelimenin ilk iki harfini karşılaştırırdık,
+eşit olduklarını görürdük ve sonra her kelimenin ikinci harfini karşılaştırmaya geçirdik. `"x"`'in alfabetik olarak `"n"`'den büyük olduğunu görüyoruz ve
+bu nedenle kelimelerin nasıl karşılaştırıldığını biliyoruz. `EQ`'nun özdeş olduğuna dair bir sezgiye sahip olmak için,
+aynı harfi her iki kelimede de aynı pozisyonda sıkıştırırsak, alfabetik sıralarını değiştirmeyeceğini fark edebiliriz.
+`"oix"` hala alfabetik olarak `"oin"`'den büyüktür.
+
+`Ordering` için `Monoid` instance'nda, ``x `mappend` y``'nin ``y `mappend` x``'e eşit olmadığına dikkat etmek önemlidir.
+İlk parametre `EQ` olmadığı sürece tutulduğundan, ``LT `mappend` GT`` `LT` ile sonuçlanırken ``GT `mappend` LT``, `GT` ile sonuçlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> LT `mappend` GT  
+LT  
+ghci> GT `mappend` LT  
+GT  
+ghci> mempty `mappend` LT  
+LT  
+ghci> mempty `mappend` GT  
+GT  
+~~~~
+
+Tamam, peki bu monoid nasıl kullanışlı? Diyelim ki iki string'i alan, uzunluklarını karşılaştıran ve bir `Ordering` döndüren bir fonksiyon yazıyorsunuz.
+Ancak string'ler aynı uzunluktaysa, `EQ`'yu hemen döndürmek yerine alfabetik olarak karşılaştırmak istiyoruz. Bunu yazmanın bir yolu şu şekildedir:
+
+~~~~ {.haskell: .ghci name="code"}
+lengthCompare :: String -> String -> Ordering  
+lengthCompare x y = let a = length x `compare` length y   
+                        b = x `compare` y  
+                    in  if a == EQ then b else a  
+~~~~
+
+`a`'nın uzunluklarını karşılaştırmanın sonucunu ve `b` alfabetik karşılaştırmasının sonucunu adlandırırız ve sonra uzunlukların eşit olduğu ortaya çıkarsa,
+alfabetik sıralarını döndürürüz.
+
+Ancak `Ordering`'in nasıl bir monoid olduğu konusundaki anlayışımızı kullanarak, bu fonksiyonu çok daha basit bir şekilde yeniden yazabiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+import Data.Monoid  
+  
+lengthCompare :: String -> String -> Ordering  
+lengthCompare x y = (length x `compare` length y) `mappend`  
+                    (x `compare` y)  
+~~~~
+
+Bunu deneyebiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> lengthCompare "zen" "ants"  
+LT  
+ghci> lengthCompare "zen" "ant"  
+GT  
+~~~~
+
+Unutmayın, `mappend`'i kullandığımızda, sol parametresi `EQ` olmadığı sürece her zaman korunur, bu durumda sağdaki tutulur.
+Bu yüzden birinci olduğunu düşündüğümüz karşılaştırmayı daha önemli kriter olarak ilk parametre olarak koyuyoruz.
+Bu fonksiyonu ünlülerin sayısını karşılaştırmak için genişletmek ve bunu karşılaştırma için en önemli ikinci kriter olarak ayarlamak isteseydik,
+bunu şu şekilde değiştirirdik:
+
+~~~~ {.haskell: .ghci name="code"}
+import Data.Monoid  
+  
+lengthCompare :: String -> String -> Ordering  
+lengthCompare x y = (length x `compare` length y) `mappend`  
+                    (vowels x `compare` vowels y) `mappend`  
+                    (x `compare` y)  
+    where vowels = length . filter (`elem` "aeiou")  
+~~~~
+
+Bir string alan ve bize ilk önce sadece `"aeiou"` string'ndeki harfler için filtreden geçirip sonra ona `length` uygulayarak kaç sesliye sahip olduğunu söyleyen
+bir yardımcı fonksiyon yaptık.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> lengthCompare "zen" "anna"  
+LT  
+ghci> lengthCompare "zen" "ana"  
+LT  
+ghci> lengthCompare "zen" "ann"  
+GT  
+~~~~
+
+Çok havalı. Burada, ilk örnekte uzunlukların nasıl farklı bulunduğunu ve böylece `LT`'nin nasıl döndürüldüğünü görüyoruz,
+çünkü `"zen"`'in uzunluğu `"anna"`'nın uzunluğundan daha azdır. İkinci örnekte, uzunluklar aynıdır, ancak ikinci string'de daha fazla sesli harf vardır,
+bu nedenle `LT` tekrar döndürülür. Üçüncü örnekte, ikisi de aynı uzunlukta ve aynı sayıda ünlüdür, bu nedenle alfabetik olarak karşılaştırılırlar ve `"zen"` kazanır.
+
+`Ordering` monoid çok havalı, çünkü eşyaları birçok farklı kritere göre kolayca karşılaştırmamıza ve bu kriterleri en önemlisinden
+en aza doğru bir sıraya koymamıza izin veriyor.
+
+
+Maybe monoid
+------------
+
+`Maybe a`'nın bir `Monoid` instance'ı haline getirilebileceği çeşitli yollara ve bu instance'ların ne için yararlı olduğuna bir göz atalım.
+
+Bunun bir yolu, `Maybe a`'yı yalnızca tür parametresi `a` da bir monoid ise bir monoid olarak ele almak ve sonra `mappend`'i `Just` ile sarılmış değerlerin
+`mappend` işlemini kullanacak şekilde uygulamaktır. Özdeş olarak `Nothing` kullanıyoruz ve bu nedenle, `mappend` iki değerden biri `Nothing` ise, diğer değeri koruyoruz.
+
+~~~~ {.haskell: .ghci name="code"}
+instance Monoid a => Monoid (Maybe a) where  
+    mempty = Nothing  
+    Nothing `mappend` m = m  
+    m `mappend` Nothing = m  
+    Just m1 `mappend` Just m2 = Just (m1 `mappend` m2)  
+~~~~
+
+Sınıf kısıtlamasına dikkat edin. `Maybe a`'nın, yalnızca bir `Monoid` instance'ysa bir `Monoid` instance'ı olduğunu söyler.
+Bir şeyi `Nothing` ile `mappend`'lersek, sonuç o bir şeydir. İki `Just` değerini `mappend`'lersek, `Just`'ın içeriği `mappend`'lenir ve ardından `Just` ile geri sarılır.
+Bunu yapabiliriz çünkü sınıf kısıtlaması `Just`'ın içindeki şeyin türünün bir Monoid instance'ı olmasını sağlar.
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> Nothing `mappend` Just "andy"  
+Just "andy"  
+ghci> Just LT `mappend` Nothing  
+Just LT  
+ghci> Just (Sum 3) `mappend` Just (Sum 4)  
+Just (Sum {getSum = 7})  
+~~~~
+
+Bu, başarısız olmuş olabilecek hesaplamaların sonucu olarak monoidlerle uğraşırken kullanılır. Bu instance nedeniyle, hesaplamaların `Nothing` veya `Just` değer olup
+olmadıklarını görerek başarısız olup olmadığını kontrol etmemize gerek yoktur; onlara normal monoidler gibi davranmaya devam edebiliriz.
+
+Peki ya `Maybe` içeriğinin türü bir `Monoid` instance'î değilse? Önceki instance bildiriminde, içeriğin monoid olmasına güvenmemiz gereken tek durumun,
+`mappend`'in her iki parametresinin de `Just` değerleri olduğu durum olduğuna dikkat edin. Ancak içeriklerin monoid olup olmadığını bilmiyorsak,
+aralarında mappend kullanamayız, peki ne yapmalıyız? Yapabileceğimiz tek şey, ikinci değeri atmak ve ilkini korumaktır.
+Bunun için, `First a` türü vardır ve bu onun tanımıdır:
+
+~~~~ {.haskell: .ghci name="code"}
+newtype First a = First { getFirst :: Maybe a }  
+    deriving (Eq, Ord, Read, Show)  
+~~~~
+
+`Maybe a` alırız ve onu newtype ile sarmalarız. `Monoid` instance'ı aşağıdaki gibidir:
+
+~~~~ {.haskell: .ghci name="code"}
+instance Monoid (First a) where  
+    mempty = First Nothing  
+    First (Just x) `mappend` _ = First (Just x)  
+    First Nothing `mappend` x = x  
+~~~~
+
+`Just` dediğimiz gibi. `mempty`, `First` *newtype* constructor'yla sarmalanmış bir `Nothing`'dir. `mappend`'in ilk parametresi bir `Just` değer ise, ikincisini yok sayarız.
+İlki `Nothing` ise, ikinci parametreyi `Just` veya `Nothing` olmasına bakılmaksızın sonuç olarak sunarız:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getFirst $ First (Just 'a') `mappend` First (Just 'b')  
+Just 'a'  
+ghci> getFirst $ First Nothing `mappend` First (Just 'b')  
+Just 'b'  
+ghci> getFirst $ First (Just 'a') `mappend` First Nothing  
+Just 'a'  
+~~~~
+
+`First`, bir dizi `Maybe` değerimiz olduğunda ve bunlardan herhangi birinin `Just` olup olmadığını bilmek istediğimizde kullanışlıdır. `mconcat` fonksiyonu kullanışlıdır:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getFirst . mconcat . map First $ [Nothing, Just 9, Just 10]  
+Just 9  
+~~~~
+
+`Maybe a` üzerinde bir monoid istersek, eğer `mappend`'in her iki parametresi `Just` değer ise, ikinci parametrenin tutulması için `Data.Monoid`,
+`First a` gibi çalışan, sadece son non-`Nothing` değer `mappend` ve `mconcat` kullanılırken tutulur:
+
+`Maybe a` üzerinde bir monoid istersek, böylece ikinci parametrenin her iki `mappend` parametresi de `Just` değerler ise,
+`Data.Monoid` bir `Last a` türü sağlar ve `First a`, yalnızca son `mappend` ve `mconcat` kullanıldığında non-`Nothing` değeri tutulur:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getLast . mconcat . map Last $ [Nothing, Just 9, Just 10]  
+Just 10  
+ghci> getLast $ Last (Just "one") `mappend` Last (Just "two")  
+Just "two"  
+~~~~
+
+
+
+Veri yapılarında fold için monoid'leri kullanma
+-----------------------------------------------
+Monoidleri çalıştırmanın en ilginç yollarından biri, çeşitli veri yapıları üzerindeki fold'ları tanımlamamıza yardımcı olmalarını sağlamaktır.
+Şimdiye kadar, sadece listelerde fold'lama yaptık, ancak fold'lanabilen tek veri yapısı listeler değil. Hemen hemen her veri yapısı üzerinde fold'lar tanımlayabiliriz.
+Ağaçlar özellikle fold'lamaya elverişlidir.
+
+fold'larla iyi çalışan çok sayıda veri yapısı olduğundan, `Foldable` tür sınıfı tanıtıldı.
+`Functor`'ın eşleştirilebilen şeyler için olduğu gibi, `Foldable` da fold'lanabilen şeyler içindir! `Data.Foldable` içinde bulunabilir ve
+adları `Prelude`'da bulunanlarla çakışan export fonksiyonları olduğu için, en iyisi import qualified (ve fesleğenle servis edilir):
+
+~~~~ {.haskell: .ghci name="code"}
+import qualified Foldable as F  
+~~~~
+
+Kendimizi değerli tuş vuruşlarından kurtarmak için, `F` olarak qualified edilmiş onu import ediyoruz. Pekala, bu tür sınıfının tanımladığı bazı fonksiyonlar nelerdir?
+Aralarında `foldr`, `foldl`, `foldr1` ve `foldl1` var. Huh? Ancak bu fonksiyonları zaten biliyoruz, bunda bu kadar yeni olan ne?
+`Foldable` `foldr` ve `Prelude`'daki `foldr` türlerini karşılaştırarak nasıl farklı olduklarını görelim:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> :t foldr  
+foldr :: (a -> b -> b) -> b -> [a] -> b  
+ghci> :t F.foldr  
+F.foldr :: (F.Foldable t) => (a -> b -> b) -> b -> t a -> b  
+~~~~
+
+Ah! Dolayısıyla, `foldr` bir listeyi alıp fold'larken, `Data.Foldable`'daki `foldr`, sadece listeleri değil, fold'lanabilen herhangi bir türü kabul eder!
+Beklendiği gibi, her iki foldr fonksiyonu da listeler için aynı şeyi yapar:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> foldr (*) 1 [1,2,3]  
+6  
+ghci> F.foldr (*) 1 [1,2,3]  
+6  
+~~~~
+
+Tamam o zaman, fold'ları destekleyen diğer bazı veri yapıları nelerdir? Eh, hepimizin bildiği ve sevdiğimiz `Maybe` var!
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> F.foldl (+) 2 (Just 9)  
+11  
+ghci> F.foldr (||) False (Just True)  
+True  
+~~~~
+
+Ancak bir `Maybe` değerinin üzerine fold'lamak çok ilginç değildir, çünkü fold'lama söz konusu olduğunda, `Just` değeri ise tek öğeli bir liste gibi,
+`Nothing` ise boş bir liste gibi davranır. Öyleyse biraz daha karmaşık olan bir veri yapısını inceleyelim. 
+
+[Özyinelemeli veri yapıları](../tr/08-making-our-own-types-and-typeclasses.md#özyinelemeli-veri-yapıları) bölümündeki tree veri yapısını hatırlıyor musunuz? Bunu şöyle tanımladık:
+
+~~~~ {.haskell: .ghci name="code"}
+data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)  
+~~~~
+
+Bir ağacın ya hiçbir değeri olmayan boş bir ağacı olduğunu ya da bir değeri ve ayrıca iki ağacı daha tutan bir node olduğunu söyledik.
+Tanımladıktan sonra, onu bir `Functor` instance'ı yaptık ve bununla birlikte `fmap` fonksiyonlarını onun üzerinden kullanma yeteneği kazandık.
+Şimdi, fold yeteneğine sahip olabilmemiz için onu `Foldable` bir instance yapacağız. Bir type contructor'u bir `Foldable` instance'ı yapmanın bir yolu,
+bunun için doğrudan foldr uygulamaktır. Ancak, çoğu zaman çok daha kolay olan başka bir yol, yine `Foldable` tür sınıfının bir parçası olan `foldMap` fonksiyonunu uygulamaktır.
+`foldMap` fonksiyonu aşağıdaki türe sahiptir:
+
+~~~~ {.haskell: .ghci name="code"}
+foldMap :: (Monoid m, Foldable t) => (a -> m) -> t a -> m  
+~~~~
+
+İlk parametresi, foldable yapımızın içerdiği (burada `a` ile belirtilmiştir) türden bir değer alan ve monoid bir değer döndüren bir fonksiyondur.
+İkinci parametresi, `a` türü değerleri içeren foldable bir yapıdır. Foldable yapı üzerinde fonksiyonu eşler, böylece monoid değerler içeren foldable bir yapı oluşturur.
+Daha sonra, bu monoid değerler arasında `mappend` yaparak, hepsini tek bir monoid değerde birleştirir.
+Bu fonksiyon şu anda biraz tuhaf gelebilir, ancak uygulanmasının çok kolay olduğunu göreceğiz. Ayrıca harika olan şey, bu fonksiyonu uygulamak,
+türümüzün `Foldable` bir instance haline getirilmesi için gereken tek şey olmasıdır. Öyleyse, eğer bir tür için sadece `foldMap`'i uygularsak,
+bu türde ücretsiz olarak `foldr` ve `foldl` elde ederiz!
+
+`Tree`'yi böyle bir `Foldable` instance'ı yapıyoruz:
+
+~~~~ {.haskell: .ghci name="code"}
+instance F.Foldable Tree where  
+    foldMap f Empty = mempty  
+    foldMap f (Node x l r) = F.foldMap f l `mappend`  
+                             f x           `mappend`  
+                             F.foldMap f r  
+~~~~
+
+![accordion](../img/accordion.png)
+Şöyle düşünüyoruz: Ağacımızın bir unsurunu alan ve tek bir değer döndüren bir fonksiyon sağlanmışsa, tüm ağacımızı nasıl tek bir monoid değere indirebiliriz?
+Ağacımızın üzerinde `fmap` yaparken, bir node'a eşleştirdiğimiz fonksiyonu uyguladık ve ardından fonksiyonu sağ alt ağacın yanı sıra sol alt ağacın üzerine de
+yinelemeli(recursively) olarak eşledik. Burada, sadece bir fonksiyonu eşlemekle değil, aynı zamanda sonuçları `mappend` kullanarak tek bir monoid değerde birleştirmekle de
+görevlendirildik. İlk önce boş ağacın durumunu ele alıyoruz - hiçbir değeri veya alt ağaçları olmayan, hüzünlü ve yalnız bir ağaç.
+Monoid oluşturma fonksiyonumuza verebileceğimiz herhangi bir değeri taşımaz, bu yüzden sadece ağacımız boşsa, monoid değerinin `mempty` olacağını söyleriz.
+
+Boş olmayan bir node durumu biraz daha ilginçtir. Bir değerin yanı sıra iki alt ağaç içerir. Bu durumda, sol ve sağ alt ağaçların üzerinde aynı `f` fonksiyonunu
+yinelemeli olarak `foldMap` yaparız. `foldMap`'inizin tek bir monoid değerle sonuçlandığını unutmayın. Ayrıca `f` fonksiyonumuzu node'daki değere uygularız.
+Şimdi üç monoid değerimiz var (alt ağaçlarımızdan ikisi ve node'daki değere `f` uygulamasından) ve onları tek bir değerde bir araya getirmemiz gerekiyor.
+Bu amaçla `mappend` kullanıyoruz ve doğal olarak önce sol alt ağaç, sonra node değeri ve ardından sağ alt ağaç geliyor.
+
+Bir değer alan ve monoid bir değer döndüren fonksiyonu sağlamamız gerekmediğine dikkat edin. Bu fonksiyonu `foldMap` için bir parametre olarak alıyoruz ve
+karar vermemiz gereken tek şey, bu fonksiyonu nereye uygulayacağımız ve ondan elde edilen monoidleri nasıl birleştireceğimiz.
+
+Artık ağaç türümüz için `Foldable` bir instance'ımız olduğuna göre, ücretsiz olarak `foldr` ve `foldl` alıyoruz! Bu ağacı düşünün:
+
+~~~~ {.haskell: .ghci name="code"}
+testTree = Node 5  
+            (Node 3  
+                (Node 1 Empty Empty)  
+                (Node 6 Empty Empty)  
+            )  
+            (Node 9  
+                (Node 8 Empty Empty)  
+                (Node 10 Empty Empty)  
+            )  
+~~~~
+
+Kökünde `5`, ardından sol node'nda `3`, solda `1` ve sağda `6` bulunur. Kökün sağ node'nda `9`, solunda `8` ve en sağda `10` bulunur.
+`Foldable` bir instance'la, listeler üzerinde yapabildiğimiz tüm fold'ları yapabiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> F.foldl (+) 0 testTree  
+42  
+ghci> F.foldl (*) 1 testTree  
+64800  
+~~~~
+
+Ayrıca, `foldMap` yalnızca yeni `Foldable` instance'larını oluşturmak için kullanışlı değildir; yapımızı tek bir monoid değere düşürmek için kullanışlıdır.
+Örneğin, ağacımızdaki herhangi bir sayının `3`'e eşit olup olmadığını bilmek istiyorsak, bunu yapabiliriz:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getAny $ F.foldMap (\x -> Any $ x == 3) testTree  
+True  
+~~~~
+
+Burada, `\x -> Any bir $ x == 3`, bir sayıyı alan ve monoid bir değer, yani `Any` ile sarılmış bir `Bool` döndüren bir fonksiyondur.
+`foldMap` bu fonksiyonu ağacımızdaki her elemana uygular ve sonra ortaya çıkan monoidleri `mappend` ile tek bir monoid haline getirir. Bunu yaparsak:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> getAny $ F.foldMap (\x -> Any $ x > 15) testTree  
+False  
+~~~~
+
+Ağacımızdaki tüm node'lar, onlara lambda fonksiyonu uygulandıktan sonra `Any` `False` değerini tutacaktır.
+Ancak `True` sonucunu vermek için, `Any` için `mappend` parametresinin en az bir `True` değerine sahip olması gerekir.
+Bu yüzden nihai sonuç `False`'tır, bu mantıklıdır çünkü ağacımızdaki hiçbir değer `15`'ten büyük değildir.
+
+Ayrıca `\x -> [x]` fonksiyonu ile `foldMap` yaparak ağacımızı kolaylıkla bir listeye dönüştürebiliriz. İlk önce bu fonksiyonu ağacımıza yansıttığımızda,
+her eleman tekil bir liste haline gelir. Tüm bu tek liste arasında gerçekleşen `mappend` eylemi, ağacımızdaki tüm öğeleri içeren tek bir liste ile sonuçlanır:
+
+~~~~ {.haskell: .ghci name="code"}
+ghci> F.foldMap (\x -> [x]) testTree  
+[1,3,6,5,8,9,10]  
+~~~~
+
+Harika olan, tüm bu numaraların ağaçlarla sınırlı olmaması, herhangi bir `Foldable` instance'nda işe yaramasıdır.
 

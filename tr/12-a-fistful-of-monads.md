@@ -1198,6 +1198,7 @@ başka bir yoludur.
 
 İlk iki yasayı `<=<` kullanacak şekilde çevirirsek, sol kimlik yasası her monadik `f` fonksiyonu için `f <=< return` ifadesinin
 sadece `f` yazmakla aynı olduğunu ve sağ kimlik yasasının `return <=< f`'de `f`'den farklı değildir.
+
 Bu, `f`'nin normal bir fonksiyon olması durumunda `(f . g) . h'nin f . (g . h)` ile aynı olması, `f . id` her zaman `f` ile aynıdır ve `id . f` de sadece `f`'dir.
 
 Bu bölümde, monad'ların temellerine bir göz attık ve `Maybe` monad'ının ve list monad'ının nasıl çalıştığını öğrendik.

@@ -1148,7 +1148,7 @@ Take salad out of the oven
 ~~~~
 
 
-Command line arguments
+Komut satırı argümanları
 ----------------------
 
 ![arguments](../img/arguments.png)

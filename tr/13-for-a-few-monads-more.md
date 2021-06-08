@@ -783,7 +783,7 @@ Durum monad'ını kullanmak tam olarak bunu yapmamızı sağlayacaktır. Bununla
 durumu manuel olarak yönetmek zorunda kalmadan bunları kullanabileceğiz.
 
 
-Durum monad'ı
+State monad'ı
 -------------
 
 `Control.Monad.State` modülü, stateful hesaplamaları saran bir `newtype` sağlar. İşte tanımı:

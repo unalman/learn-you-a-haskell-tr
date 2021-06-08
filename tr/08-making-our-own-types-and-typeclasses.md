@@ -195,7 +195,7 @@ Bir veri türünün value constructor'larını export etmek, uygulamalarını gi
 Ayrıca, modülümüzü kullanan kişi, value constructor'lara karşı desen eşleştirme yapamaz.
 
 
-Sözdizimi kaydı
+Kayıt Sözdizimi
 ---------------
 ![record](../img/record.png)
 

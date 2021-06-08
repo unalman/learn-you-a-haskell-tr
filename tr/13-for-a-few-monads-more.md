@@ -989,8 +989,8 @@ ghci> runState threeCoins (mkStdGen 33)
 Güzel. Adımlar arasında bir miktar durumun korunmasını gerektiren bu tür şeyleri yapmak, çok daha az güçlük haline geldi!
 
 
-Duvardaki hata hatası
----------------------
+Error error on the wall
+-----------------------
 
 Şimdiye kadar `Maybe`'nin değerlere olası başarısızlık bağlamını eklemek için kullanıldığını biliyoruz. Değer, `Just` bir şey veya `Nothing` olabilir.
 Ne kadar yararlı olursa olsun, bir `Nothing`'e sahip olduğumuzda, tek bildiğimiz bir tür başarısızlık olduğudur,

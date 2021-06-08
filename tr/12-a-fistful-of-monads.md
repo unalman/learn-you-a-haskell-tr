@@ -259,6 +259,7 @@ Sonraki iki satır `>>=` biraz daha fazlasını gösteriyor.
 Çizgide yürümek
 ---------------
 
+![pierre](../img/pierre.png)
 Artık olası başarısızlık bağlamını hesaba katarken, `a -> Maybe b` türündeki bir fonksiyona bir `Maybe a` değerini nasıl besleyeceğimizi bildiğimize göre,
 birkaç `Maybe a` değerinin hesaplamalarını işlemek için `>>=`'ı tekrar tekrar nasıl kullanabileceğimize bakalım.
 

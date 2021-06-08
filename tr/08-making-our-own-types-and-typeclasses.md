@@ -1563,7 +1563,7 @@ sağ alt ağacın yalnızca daha büyük node'lara sahip olduğu bir ağaç üze
 Sonraki bölümlerden birinde functor yasalarını daha ayrıntılı olarak inceleyeceğiz.
 
 
-Türler ve bazı türler
+Kinds ve bazı türler
 ---------------------
 
 ![typefoo](../img/typefoo.png)

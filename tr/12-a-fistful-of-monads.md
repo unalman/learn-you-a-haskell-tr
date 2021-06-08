@@ -203,6 +203,7 @@ Burada, bir türün monad yapılmadan önce applicative functor olması için `c
 Olmalıydı, ama Haskell yapıldığında, insanların aklına applicative functor'lar Haskell için uygun olduğu anlaşılmamıştı, bu yüzden orada değildiler.
 Ancak `Monad` sınıf bildirimi öyle demese bile, her monad'ın applicative functor gördüğünden emin olabilirsiniz.
 
+![kid](../img/kid.png)
 `Monad` tür sınıfının tanımladığı ilk fonksiyon `return`'dür. `pure` ile aynıdır, sadece farklı bir isimle. Türü `(Monad m) => a -> m a` şeklindedir.
 Bir değeri alır ve onu hala bu değeri tutan minimum varsayılan bağlama yerleştirir. Başka bir deyişle, bir şeyi alır ve bir monad'la sarar.
 Her zaman `Applicative` tür sınıfındaki `pure` fonksiyonla aynı şeyi yapar, bu da `return` ile zaten tanıştığımız anlamına gelir.

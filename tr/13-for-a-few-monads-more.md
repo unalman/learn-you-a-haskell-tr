@@ -1,5 +1,5 @@
-Birkaç Monad İçin Daha Fazla
-============================
+Birkaç Monad İçin Daha
+======================
 
 ![clint](../img/clint.png)
 Monad'ların bağlamlarla değerleri almak ve bunları fonksiyonlara uygulamak için nasıl kullanılabileceğini ve `>>=` veya `do n`otasyonu kullanmanın

@@ -1,9 +1,9 @@
-Learn You a Haskell for Great Good!
+Size Büyük İyilik için Haskell'ı Öğrenin!
 ===================================
 
 > This is the Turkish translation of  Miran Lipovača's book [Learn You a Haskell for Great Good!](http://learnyouahaskell.com)
 
-> Bu çeviri Miran Lipovača'nın [Learn You a Haskell for Great Good!](http://learnyouahaskell.com) kitabının Türkçe çevirisidir. 
+> Bu çeviri Miran Lipovača'nın [Size Büyük İyilik için Haskell'ı Öğrenin!](http://learnyouahaskell.com) kitabının Türkçe çevirisidir. 
 
 #### İçindekiler:
 ### 1. [Başlangıç](/tr/01-introduction.md)

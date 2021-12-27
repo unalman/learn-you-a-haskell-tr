@@ -115,7 +115,7 @@ ghci> max <$> Just 3 <*> Nothing
 Nothing 
 ~~~~
 
-Şimdi de `Maybe` için `>>=`'ı nasıl yapacağımızı düşünelim. Söylediğimiz gibi, `>>=` monadikc bir değer alır ve normal bir değer alan ve
+Şimdi de `Maybe` için `>>=`'ı nasıl yapacağımızı düşünelim. Söylediğimiz gibi, `>>=` monadik bir değer alır ve normal bir değer alan ve
 monadik bir değer döndüren ve bu fonksiyonu monadik değere uygulamayı başaran bir fonksiyon. Fonksiyon normal bir değer alırsa bunu nasıl yapar?
 Bunu yapmak için, bu monadik değerin bağlamını hesaba katması gerekir.
 

@@ -1,7 +1,7 @@
 Size Büyük İyilik İçin Haskell Öğrenin!
 ===================================
 
-> Bu çeviri Miran Lipovača'nın [Size Büyük İyilik İçin Haskell Öğrenin!](http://learnyouahaskell.com) kitabının Türkçe çevirisidir. 
+> Bu çeviri Miran Lipovača'nın [Size Büyük İyilik İçin Haskell Öğrenin!](https://learnyouahaskell.github.io/) kitabının Türkçe çevirisidir. 
 
 #### İçindekiler:
 ### 1. [Başlangıç](/tr/01-introduction.md)

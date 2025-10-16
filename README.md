@@ -80,7 +80,7 @@ Size Büyük İyilik İçin Haskell Öğrenin!
   * [Liste monad](/tr/12-a-fistful-of-monads.md#liste-monad)
   * [Monad yasaları](/tr/12-a-fistful-of-monads.md#monad-yasaları)
 ### 13. [Birkaç Monad İçin Daha](/tr/13-for-a-few-monads-more.md)
-  * [Yazar? Onu zar zor tanımıyorum!](/tr/13-for-a-few-monads-more.md#yazar-onu-zar-zor-tanımıyorum)
+  * [Yazar mı? Onu fazla tanımıyorum ki!](/tr/13-for-a-few-monads-more.md#yazar-onu-zar-zor-tanımıyorum)
   * [Okuyucu? Ugh, bu şaka yine olmaz.](/tr/13-for-a-few-monads-more.md#okuyucu-ugh-bu-şaka-yine-olmaz)
   * [Zevkli stateful hesaplamalar](/tr/13-for-a-few-monads-more.md#zevkli-stateful-hesaplamalar)
   * [Error error on the wall](/tr/13-for-a-few-monads-more.md#error-error-on-the-wall)

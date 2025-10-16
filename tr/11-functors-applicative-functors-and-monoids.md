@@ -1,4 +1,4 @@
-Functor'lar, Applicative Functor'lar ve Monoidler
+Functor'lar, Applicative Functor'lar ve Monoid'ler
 =================================================
 
 Haskell'in saflık, daha yüksek dereceli fonksiyonlar, parametreli cebirsel veri türleri ve tür sınıfları kombinasyonu,

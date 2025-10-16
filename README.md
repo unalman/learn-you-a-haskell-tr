@@ -67,7 +67,7 @@ Size Büyük İyilik İçin Haskell Öğrenin!
 ### 10. [İşlevsel Olarak Sorunları Çözme](/tr/10-functionally-solving-problems.md)
   * [Ters Lehçe notasyon hesaplayıcı](/tr/10-functionally-solving-problems.md#ters-lehçe-notasyon-hesaplayıcı)
   * [Heathrow'dan Londra'ya](/tr/10-functionally-solving-problems.md#heathrowdan-londraya)
-### 11. [Functor'lar, Applicative Functor'lar ve Monoidler](/tr/11-functors-applicative-functors-and-monoids.md)
+### 11. [Functor'lar, Applicative Functor'lar ve Monoid'ler](/tr/11-functors-applicative-functors-and-monoids.md)
   * [Functors redux](/tr/11-functors-applicative-functors-and-monoids.md#functors-redux)
   * [Applicative Functor'lar](/tr/11-functors-applicative-functors-and-monoids.md#applicative-functorlar)
   * [newtype keyword'ü](/tr/11-functors-applicative-functors-and-monoids.md#newtype-keywordü)

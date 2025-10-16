@@ -16,7 +16,7 @@ yani muhtemelen zaten ona sahipsiniz. Yapıp yapmadığınızı kontrol etmek i�
 Bu, hangi Haskell paketlerini kurduğunuzu ve bunlardan birinin `mtl` olması gerektiğini ve ardından bir sürüm numarasını gösterecektir.
 
 
-Yazar? Onu zar zor tanımıyorum!
+Yazar mı? Onu fazla tanımıyorum ki!
 -------------------------------
 
 Silahımıza `Maybe` monad'ı, liste monad'ı ve `IO` monad'ı yükledik. Şimdi `Writer` monad'ını odaya koyalım ve onu ateşlediğimizde ne olacağını görelim!
